@@ -7,6 +7,8 @@ import com.Dummy.demo.service.productService;
 import com.Dummy.demo.model.Product;
 import java.util.List;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/products")
@@ -24,19 +26,9 @@ public class productController {
         return productService.getList(search, size);
     }
 
-    @GetMapping("/A")
-    public String productA() {
-        return "List of product under A";
-    }
-
-    @GetMapping("/B")
-    public String productB() {
-        return "List of products under B";
-    }
-
-    @GetMapping("/C")
-    public String productC() {
-        return "List of products under C";
+    @PostMapping("/add")
+    public String addProd(@RequestBody Product prod) {
+        return productService.addProduct(prod.getName(), prod.getPrice());
     }
 
 }

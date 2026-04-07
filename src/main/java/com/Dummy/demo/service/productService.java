@@ -11,16 +11,23 @@ import java.util.List;
 @Service
 public class productService {
     Faker fakeProd = new Faker();
-    List<Product> prodList = new ArrayList<>();
+    public List<Product> prodList = new ArrayList<>();
 
-    @PostConstruct
+    @PostConstruct // makes this certain method run after service,controller,and rest of the beans
+                   // created
     public void generateProdList() {
-        for (int i = 0; i < 150; i++) {
-            int id = i + 1;
+        for (Integer i = 0; i < 150; i++) {
+            Integer id = i + 1;
             String name = fakeProd.commerce().productName();
             String price = fakeProd.commerce().price(); // price between 0 and 1000
             prodList.add(new Product(id, name, price));
         }
+    }
+
+    public String addProduct(String name, String price) {
+        Integer id = prodList.size() + 1;
+        prodList.add(new Product(id, name, price));
+        return "Product added successfully.";
     }
 
     public List<Product> getList(String search, Integer size) {
