@@ -3,15 +3,15 @@ package com.Dummy.demo.model;
 public class Product {
     public Integer id;
     public String name;
-    public String price;
+    public Double price;
 
-    public Product(Integer id, String name, String price) {
+    public Product(Integer id, String name, Double price) {
         this.id = id;
         this.name = name;
         this.price = price;
     }
 
-    public Product() {
+    public Product() { // Useful for partial paramters,else error thrown
 
     }
 
@@ -19,7 +19,7 @@ public class Product {
         return id;
     }
 
-    public String getPrice() {
+    public Double getPrice() {
         return price;
     }
 
@@ -35,7 +35,7 @@ public class Product {
         this.name = name;
     }
 
-    public void setPrice(String price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 }

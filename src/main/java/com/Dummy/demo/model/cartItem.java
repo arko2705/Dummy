@@ -4,7 +4,7 @@ package com.Dummy.demo.model;
 public class cartItem extends Product {
     private int quantity;
 
-    public cartItem(Integer id, String name, String price, int quantity) {
+    public cartItem(Integer id, String name, Double price, int quantity) {
         super(id, name, price);
         this.quantity = quantity;
     }

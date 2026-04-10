@@ -19,12 +19,15 @@ public class productService {
         for (Integer i = 0; i < 150; i++) {
             Integer id = i + 1;
             String name = fakeProd.commerce().productName();
-            String price = fakeProd.commerce().price(); // price between 0 and 1000
-            prodList.add(new Product(id, name, price));
+            Double fakePrice = Double.parseDouble(fakeProd.commerce().price()); // price between 0 and 1000
+            prodList.add(new Product(id, name, fakePrice));
         }
     }
 
-    public String addProduct(String name, String price) {
+    public String addProduct(String name, Double price) {
+        if (name == null || name.isEmpty() || price == null) {
+            return "Name and price cannot be empty.";
+        }
         Integer id = prodList.size() + 1;
         prodList.add(new Product(id, name, price));
         return "Product added successfully.";
@@ -52,5 +55,26 @@ public class productService {
             return limited;
         }
         return result;
+    }
+
+    public String updateProd(int id, String reqName, Double reqPrice) {
+        for (Product p : prodList) {
+            if (p.getId() == id) {
+                p.setName(reqName);
+                p.setPrice(reqPrice);
+                return "Product updated successfully";
+            }
+        }
+        return "Product not found";
+    }
+
+    public String delProd(int id) {
+        for (Product p : prodList) {
+            if (p.getId() == id) {
+                prodList.remove(p);
+                return "Product deleted successfully";
+            }
+        }
+        return "Product not found";
     }
 }

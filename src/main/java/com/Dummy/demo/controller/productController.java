@@ -9,6 +9,9 @@ import java.util.List;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/products")
@@ -27,8 +30,17 @@ public class productController {
     }
 
     @PostMapping("/add")
-    public String addProd(@RequestBody Product prod) {
+    public String addProd(@RequestBody Product prod) { // RequestBody dataStructure obv needs to be mentioned.
         return productService.addProduct(prod.getName(), prod.getPrice());
     }
 
+    @PutMapping("/update") // PutMapping is idempotent,it doesnt allow duplicates. PostMapping isnt.
+    public String updateProd(@RequestBody Product prod) {
+        return productService.updateProd(prod.getId(), prod.getName(), prod.getPrice());
+    }
+
+    @DeleteMapping("/delete/{id}") // the url path
+    public String deleteProd(@PathVariable int id) { // url paths variable
+        return productService.delProd(id);
+    }
 }
