@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import com.Dummy.demo.model.Order;
@@ -12,6 +13,7 @@ import com.Dummy.demo.service.orderService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/orders")
@@ -31,5 +33,11 @@ public class orderController {
     @PostMapping("/create")
     public String createOrder() {
         return orderservice.createOrder();
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deleteOrder(@PathVariable int id) {
+        // Implementation for deleting an order
+        return orderservice.deleteOrder(id);
     }
 }

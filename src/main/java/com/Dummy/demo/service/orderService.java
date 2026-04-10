@@ -31,4 +31,15 @@ public class orderService {
     public List<Order> getOrders() {
         return orderList;
     }
+
+    public String deleteOrder(int id) {
+        for (Order order : orderList) {
+            if (order.getOrderId() == id) { // Anything model related,like to access model properties,they are present
+                                            // in model class
+                orderList.remove(order);
+                return "Order deleted successfully";
+            }
+        }
+        return "Order not found";
+    }
 }
