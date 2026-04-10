@@ -15,7 +15,7 @@ public class orderService {
         this.cartService = cartService;
     }
 
-    List<Order> orderList;
+    List<Order> orderList = new ArrayList<>();
     private int orderIdCounter = 1;
 
     public String createOrder() {
