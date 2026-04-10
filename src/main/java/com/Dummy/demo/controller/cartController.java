@@ -10,12 +10,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import com.Dummy.demo.model.cartItem;
 import com.Dummy.demo.service.cartService;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
 @RestController
 @RequestMapping("/cart")
+@Tag(name = "Cart", description = "Operations related to shopping cart")
 public class cartController {
     cartService cartservice;
 

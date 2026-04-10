@@ -8,10 +8,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import com.Dummy.demo.model.Order;
 import com.Dummy.demo.service.orderService;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 @RequestMapping("/orders")
+@Tag(name = "Orders", description = "Order management APIs")
 public class orderController {
     orderService orderservice;
 

@@ -4,10 +4,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.Dummy.demo.service.HostMetricsService;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.Dummy.demo.model.hostMetricModel;
 
 @RestController
 @RequestMapping("/smash")
+@Tag(name = "Metrics", description = "System metrics for monitoring and failure simulation")
 public class metricsController {
     @GetMapping("/test")
     public String test() {

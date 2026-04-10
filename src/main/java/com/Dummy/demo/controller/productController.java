@@ -4,6 +4,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import com.Dummy.demo.service.productService;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.Dummy.demo.model.Product;
 import java.util.List;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/products")
+@Tag(name = "Products", description = "Product catalog APIs")
 
 public class productController {
     productService productService;
