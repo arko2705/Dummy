@@ -23,7 +23,7 @@ public class orderService {
         for (cartItem item : cartService.getCart()) {
             total = total + (item.getPrice() * item.getQuantity());
         }
-        orderList.add(new Order(orderIdCounter, new ArrayList<>(cartService.getCart()), total, "Created"));
+        orderList.add(new Order(orderIdCounter, new ArrayList<>(cartService.getCart()), total, "PaymentPending"));
         orderIdCounter++;
         return "Order created successfully";
     }

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import com.Dummy.demo.model.Payment;
 
 import org.springframework.stereotype.Service;
+
 @Service
 public class PaymentService {
 
@@ -17,10 +18,14 @@ public class PaymentService {
         this.orderService = orderService;
     }
 
-    public String processPayment(int orderId, String method) {
-    	System.out.println("Incoming orderId: " + orderId);
+    public List<Payment> getPayments() {
+        return paymentList;
+    }
 
-        Order target = null;
+    public String processPayment(int orderId, String method) {
+        System.out.println("Incoming orderId: " + orderId);
+
+        Order target = null; // reference same
 
         for (Order o : orderService.getOrders()) {
             if (o.getOrderId() == orderId) {
@@ -29,7 +34,8 @@ public class PaymentService {
             }
         }
 
-        if (target == null) return "Order not found";
+        if (target == null)
+            return "Order not found";
 
         if (target.getStatus().equals("PAID")) {
             return "Order already paid";
@@ -37,7 +43,8 @@ public class PaymentService {
 
         target.setStatus("PAID");
 
-        paymentList.add(new Payment(paymentIdCounter++, orderId, method, "SUCCESS"));
+        paymentList.add(new Payment(paymentIdCounter, orderId, method, "SUCCESS"));
+        paymentIdCounter++;
 
         return "Payment successful";
     }

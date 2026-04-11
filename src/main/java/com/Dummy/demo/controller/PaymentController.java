@@ -3,28 +3,36 @@ package com.Dummy.demo.controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.Dummy.demo.DTO.PaymentRequest;
+import org.springframework.web.bind.annotation.GetMapping;
+import com.Dummy.demo.model.PaymentRequest;
 //import com.Dummy.demo.model.Payment;
 import com.Dummy.demo.service.PaymentService;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+//import io.swagger.v3.oas.annotations.parameters.RequestBody;   buddy delete this import
+import org.springframework.web.bind.annotation.RequestBody;
+import java.util.List;
+import com.Dummy.demo.model.Payment;
 
 @RestController
-@RequestMapping("/payment")
+@RequestMapping("/payments")
 public class PaymentController {
 
-    private final PaymentService paymentService;
+    PaymentService paymentService;
 
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
-   
-    @PostMapping
+
+    @GetMapping
+    public List<Payment> getPayments() {
+        return paymentService.getPayments();
+    }
+
+    @PostMapping("/make")
     public String makePayment(@RequestBody PaymentRequest request) {
         return paymentService.processPayment(
-            request.getOrderId(),
-            request.getMethod()
-        );
+                request.getOrderId(),
+                request.getMethod());
     }
+
 }

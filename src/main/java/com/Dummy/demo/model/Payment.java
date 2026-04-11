@@ -1,5 +1,5 @@
 package com.Dummy.demo.model;
-
+//If your "model" classes have no @Entity, @Table, @Id, or any JPA persistence annotations, then technically they are DTOs (or simple POJOs) in practice—regardless of what you name the folder
 public class Payment {
 	private int paymentId;
 	private Integer orderId;

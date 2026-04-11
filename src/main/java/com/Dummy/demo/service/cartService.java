@@ -51,3 +51,10 @@ public class cartService {
         return "Item not found in cart.";
     }
 }
+// bro i think clarity was hit. Till now,i was getting confused whats getting
+// displayed on the getCart page right,cuz yeah initially i was like yeah i pass
+// id and quantity,ion pass the names. But then carItem becomes
+// id=sm,name=null,price=null and quantity=something as well. cartItem is just a
+// pawn here, as cartItem is then later used to access product in
+// cartService,where it creates a List of cartItems,and initialises an item in
+// the line new cartItem(i.getId(), i.getName(), i.getPrice(), quantity));

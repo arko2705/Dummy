@@ -2,6 +2,7 @@ package com.Dummy.demo.model;
 
 import java.util.List;
 
+//Verdict: Call it a DTO or a model—both work for a database-less app. The structure is perfectly fine for carrying data between your controller, service, and client. You don't need separate "DTO" and "model" folders when there's no database. One folder is enough.
 public class Order {
     private int orderId;
     private List<cartItem> items;
