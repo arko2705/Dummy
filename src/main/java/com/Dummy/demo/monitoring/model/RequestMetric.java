@@ -5,8 +5,18 @@ public class RequestMetric {
 	private long latency;
 	private int statusCode;
 	private boolean error;
-	private long timestamp;
-	
+	private long startTime;
+	private long endTime;
+	private String errorType;
+
+	public String getErrorType() {
+		return errorType;
+	}
+
+	public void setErrorType(String errorType) {
+		this.errorType = errorType;
+	}
+
 	public String getEndpoint() {
 		return endpoint;
 	}
@@ -39,22 +49,29 @@ public class RequestMetric {
 		this.error = error;
 	}
 
-	public long getTimestamp() {
-		return timestamp;
+	public long getStartTime() {
+		return startTime;
 	}
 
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
+	public long getEndTime() {
+		return endTime;
 	}
 
-	
-	
-	public RequestMetric(String endpoint, long latency, int statusCode, boolean error) {
-        this.endpoint = endpoint;
-        this.latency = latency;
-        this.statusCode = statusCode;
-        this.error = error;
-        this.timestamp = System.currentTimeMillis();
-    }
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
+
+	public void setEndTime(long endTime) {
+		this.endTime = endTime;
+	}
+
+	public RequestMetric(long startTime, long endTime, String endpoint, long latency, int statusCode, boolean error) {
+		this.endpoint = endpoint;
+		this.latency = latency;
+		this.statusCode = statusCode;
+		this.error = error;
+		this.startTime = startTime;
+		this.endTime = endTime;
+	}
 
 }

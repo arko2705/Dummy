@@ -3,28 +3,43 @@ package com.Dummy.demo.monitoring.service;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.Dummy.demo.monitoring.model.RequestMetric;
+import com.Dummy.demo.service.nwMetrics;
+
+import java.util.ArrayList;
 
 @Service
-public class MetricsService {
+public class RequestMetricsService {
 
     private final Queue<RequestMetric> recentRequests = new ConcurrentLinkedQueue<>();// normal queue but thread safe
-
+    private final long systemStartTime = System.currentTimeMillis();
     private static final int MAX_SIZE = 500;
+    List<Long> failureTimestamps = new ArrayList<>();
+    List<Long> downtimeStartTimes = new ArrayList<>();
+    List<Long> downtimeendTimes = new ArrayList<>();
+    AtomicInteger totalRequests = new AtomicInteger(0);
+    AtomicInteger failedRequests = new AtomicInteger(0);
 
     // record new request
-    public void recordRequest(String endpoint, long latency, int statusCode, boolean error) {
+    public void recordRequest(long startTime, long endTime, String endpoint, long latency, int statusCode,
+            boolean error) {
 
-        RequestMetric metric = new RequestMetric(endpoint, latency, statusCode, error);
+        RequestMetric metric = new RequestMetric(startTime, endTime, endpoint, latency, statusCode, error);
         recentRequests.add(metric);
 
         // maintain rolling window
         if (recentRequests.size() > MAX_SIZE) {
             recentRequests.poll(); // removes element at the front of the queue
+        }
+        totalRequests.incrementAndGet();
+        if (error) {
+            failedRequests.incrementAndGet();
+            failureTimestamps.add(System.currentTimeMillis());
         }
         System.out.println("Queue size: " + recentRequests.size());
     }
@@ -44,15 +59,17 @@ public class MetricsService {
                 .orElse(0.0);
     }
 
+    public long getErrorCount() {
+        return recentRequests.stream()
+                .filter(RequestMetric::isError)
+                .count();
+    }
+
     public double getErrorRate() {
         if (recentRequests.isEmpty())
             return 0.0;
 
-        long errorCount = recentRequests.stream()
-                .filter(RequestMetric::isError)
-                .count();
-
-        return (double) errorCount / recentRequests.size();
+        return (double) getErrorCount() / getRequestCount();
     }
 
     public long getP95Latency() { // value below which 95%of the latencies fall
@@ -66,5 +83,17 @@ public class MetricsService {
 
         int index = (int) (0.95 * latencies.size()); // Get the 95th percentile index
         return latencies.get(index);
+    }
+
+    public int getTotalRequests() {
+        return totalRequests.get();
+    }
+
+    public int getFailedRequests() {
+        return failedRequests.get();
+    }
+
+    public long getSystemsStartTime() {
+        return systemStartTime;
     }
 }

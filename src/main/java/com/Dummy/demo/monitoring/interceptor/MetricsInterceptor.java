@@ -3,7 +3,7 @@ package com.Dummy.demo.monitoring.interceptor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor; //Interface like WebMvcConfigurer
 
-import com.Dummy.demo.monitoring.service.MetricsService;
+import com.Dummy.demo.monitoring.service.RequestMetricsService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,9 +11,9 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component // manage this class as a bean. Go to bottom to see whats happening
 public class MetricsInterceptor implements HandlerInterceptor {
 
-    private final MetricsService metricsService;
+    private final RequestMetricsService metricsService;
 
-    public MetricsInterceptor(MetricsService metricsService) {
+    public MetricsInterceptor(RequestMetricsService metricsService) {
         this.metricsService = metricsService;
     }
 
@@ -42,7 +42,8 @@ public class MetricsInterceptor implements HandlerInterceptor {
         System.out.println("Interceptor hit: " + endpoint);// getRequestURI returns no domain(localhost:8080),no
                                                            // query(?id=123),just the endpoint
         long startTime = (long) request.getAttribute("startTime");// getAttribute() returns object
-        long latency = System.currentTimeMillis() - startTime;
+        long endTime = System.currentTimeMillis();
+        long latency = endTime - startTime;
 
         boolean isError = statusCode >= 500 || ex != null; // treats server errors(5xx)as errors, and not client
                                                            // error (4xx) as not errors.Means sm went wrong w VALID
@@ -50,7 +51,8 @@ public class MetricsInterceptor implements HandlerInterceptor {
 
         if (endpoint.startsWith("/api")) { // put the condition else spring internally sending random reqs(favicon,etc)
                                            // making the req count go up even tho 1 req sent
-            metricsService.recordRequest(endpoint, latency, statusCode, isError);
+            metricsService.recordRequest(startTime, endTime, endpoint, latency, statusCode, isError);
+
         }
     }
 }
