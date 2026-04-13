@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import com.Dummy.demo.model.hostMetricModel;
 
 @RestController
-@RequestMapping("/smash")
+@RequestMapping("/api")
 @Tag(name = "Metrics", description = "System metrics for monitoring and failure simulation")
 public class metricsController {
     @GetMapping("/test")
@@ -21,7 +21,11 @@ public class metricsController {
     // declare class as a object like Employee employee bro
     private HostMetricsService hostService;
 
-    public metricsController(HostMetricsService hostService) {
+    public metricsController(HostMetricsService hostService) { // Something i entirely missed,but basically Spring
+                                                               // creates bean components labelled with "@" at startup,
+                                                               // and injects them after wherever necessary. So the
+                                                               // hostService is first created by spring,and then
+                                                               // injected here to eequal local hostSerice to original.
         this.hostService = hostService;
     }
 

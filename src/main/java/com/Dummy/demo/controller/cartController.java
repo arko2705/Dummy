@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
 @RestController
-@RequestMapping("/cart")
+@RequestMapping("/api/cart")
 @Tag(name = "Cart", description = "Operations related to shopping cart")
 public class cartController {
     cartService cartservice;

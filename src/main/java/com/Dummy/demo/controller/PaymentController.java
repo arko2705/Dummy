@@ -14,7 +14,7 @@ import java.util.List;
 import com.Dummy.demo.model.Payment;
 
 @RestController
-@RequestMapping("/payments")
+@RequestMapping("/api/payments")
 public class PaymentController {
 
     PaymentService paymentService;

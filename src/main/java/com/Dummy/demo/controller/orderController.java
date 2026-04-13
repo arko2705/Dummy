@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/api/orders")
 @Tag(name = "Orders", description = "Order management APIs")
 public class orderController {
     orderService orderservice;

@@ -12,6 +12,11 @@ import java.util.List;
 public class productService {
     Faker fakeProd = new Faker();
     public List<Product> prodList = new ArrayList<>();
+    ErrorSimulationService errorSim;
+
+    public productService(ErrorSimulationService errorSim) {
+        this.errorSim = errorSim;
+    }
 
     @PostConstruct // makes this certain method run after service,controller,and rest of the beans
                    // created
@@ -34,7 +39,15 @@ public class productService {
     }
 
     public List<Product> getList(String search, Integer size) {
-
+        errorSim.incrementLoad(); // Simulate error for testing purposes
+        try {
+            Thread.sleep(5000); // Im waitng for 4 seconds to wait for all requests to reach at once.Basically
+                                // this is put after incrementLoad(),so that it increases count of current
+                                // requests while the others are still processing for 5 seconds.
+        } catch (InterruptedException e) {
+            System.out.println("some error");
+        }
+        long start = System.currentTimeMillis();
         List<Product> result = new ArrayList<>();
         // Start with full list if no search
         if (search == null || search.isEmpty()) {
@@ -54,7 +67,17 @@ public class productService {
             }
             return limited;
         }
+        long end = System.currentTimeMillis();
+        long duration = end - start;
+        long delay = errorSim.simulateLatency(duration); // Simulate latency based on current load
+        try {
+            Thread.sleep(delay - duration);
+        } catch (InterruptedException e) {
+            System.out.println("Delay cannot be negative");
+        }
+        errorSim.decrementLoad(); // Decrement load after operation
         return result;
+
     }
 
     public String updateProd(int id, String reqName, Double reqPrice) {
