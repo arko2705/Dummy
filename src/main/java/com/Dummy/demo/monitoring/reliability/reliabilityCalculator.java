@@ -9,7 +9,7 @@ public class reliabilityCalculator {
         this.metricsService = metricsService;
     }
 
-    private double getFailureRate() {
+    public double getFailureRate() {
         int totalRequests = metricsService.getTotalRequests();
         int failedRequests = metricsService.getFailedRequests();
         if (totalRequests == 0) {
@@ -18,20 +18,68 @@ public class reliabilityCalculator {
         return (double) failedRequests / totalRequests;
     }
 
-    private void crashRate() {
+    public double crashRate() {
         // gotta make,its crashEvents/total time so far since system started.
+        long totalTime = System.currentTimeMillis() - metricsService.getSystemsStartTime();
+
+        int crashes = Math.min(
+                metricsService.getdownTimeStartTimes().size(),
+                metricsService.getdownTimeEndTimes().size());
+
+        if (totalTime == 0)
+            return 0;
+
+        return (double) crashes / totalTime;
     }
 
-    private void MTBF() {
-        // gotta make this total uptime / number of failures
+    public double getMTBF() {
+        long totalTime = System.currentTimeMillis() - metricsService.getSystemsStartTime();
+        int failures = metricsService.getFailureTimestamps().size();
+
+        if (failures == 0) {
+            return totalTime; // no failures → very high MTBF
+        }
+
+        return (double) totalTime / failures;
     }
 
-    private void MTTR() {
-        // mean time to repair/recovery
+    public double getMTTR() {
+        // gotta understand this myself,will understand all this during testing me and
+        // animesh
+        int size = Math.min(
+                metricsService.getdownTimeStartTimes().size(),
+                metricsService.getdownTimeEndTimes().size());
+
+        if (size == 0)
+            return 0;
+
+        long totalDowntime = 0;
+
+        for (int i = 0; i < size; i++) {
+            totalDowntime += (metricsService.getdownTimeEndTimes().get(i)
+                    - metricsService.getdownTimeStartTimes().get(i));
+        }
+
+        return (double) totalDowntime / size;
     }
 
-    private void availability() {
-        // MTBF / (MTBF + MTTR)
+    public double getAvailability() {
+        long totalTime = System.currentTimeMillis() - metricsService.getSystemsStartTime();
+        if (totalTime == 0) {
+            return 1.0;
+        }
+        long totalDowntime = 0;
+        int size = Math.min(
+                metricsService.getdownTimeStartTimes().size(),
+                metricsService.getdownTimeEndTimes().size());
+
+        for (int i = 0; i < size; i++) {
+            totalDowntime += (metricsService.getdownTimeEndTimes().get(i)
+                    - metricsService.getdownTimeStartTimes().get(i));
+        }
+        long uptime = totalTime - totalDowntime;
+        double availability = (double) uptime / totalTime;
+        return availability;
     }
 
     private double probabilityOfFailureOnDemand() {

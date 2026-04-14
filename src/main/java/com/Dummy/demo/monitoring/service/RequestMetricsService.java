@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.Dummy.demo.monitoring.model.RequestMetric;
-import com.Dummy.demo.service.nwMetrics;
 
 import java.util.ArrayList;
 
@@ -21,7 +20,7 @@ public class RequestMetricsService {
     private static final int MAX_SIZE = 500;
     List<Long> failureTimestamps = new ArrayList<>();
     List<Long> downtimeStartTimes = new ArrayList<>();
-    List<Long> downtimeendTimes = new ArrayList<>();
+    List<Long> downtimeEndTimes = new ArrayList<>();
     AtomicInteger totalRequests = new AtomicInteger(0);
     AtomicInteger failedRequests = new AtomicInteger(0);
 
@@ -95,5 +94,17 @@ public class RequestMetricsService {
 
     public long getSystemsStartTime() {
         return systemStartTime;
+    }
+
+    public List<Long> getdownTimeStartTimes() {
+        return downtimeStartTimes;
+    }
+
+    public List<Long> getdownTimeEndTimes() {
+        return downtimeEndTimes;
+    }
+
+    public List<Long> getFailureTimestamps() {
+        return failureTimestamps;
     }
 }
