@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.Dummy.demo.monitoring.model.RequestMetric;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 @Service
 public class RequestMetricsService {
@@ -23,14 +24,17 @@ public class RequestMetricsService {
     List<Long> downtimeEndTimes = new ArrayList<>();
     AtomicInteger totalRequests = new AtomicInteger(0);
     AtomicInteger failedRequests = new AtomicInteger(0);
-
+    Queue<Long> requestTimestamps = new LinkedList<>();// for throughput. Keeps timestamps only upto 60 seconds after
+                                                       // which polls(removes from front).
     // record new request
+
     public void recordRequest(long startTime, long endTime, String endpoint, long latency, int statusCode,
             boolean error) {
 
         RequestMetric metric = new RequestMetric(startTime, endTime, endpoint, latency, statusCode, error);
         recentRequests.add(metric);
-
+        long now = System.currentTimeMillis();
+        requestTimestamps.add(now);
         // maintain rolling window
         if (recentRequests.size() > MAX_SIZE) {
             recentRequests.poll(); // removes element at the front of the queue
@@ -56,6 +60,16 @@ public class RequestMetricsService {
                 .mapToLong(RequestMetric::getLatency) // Basic syntax: ClassName::methodName.
                 .average()
                 .orElse(0.0);
+    }
+
+    public double getThroughput() {
+        long now = System.currentTimeMillis();
+        while (!requestTimestamps.isEmpty()
+                && now - requestTimestamps.peek() > 60000) {
+            requestTimestamps.poll();
+        }
+
+        return requestTimestamps.size() / 60.0;
     }
 
     public long getErrorCount() {

@@ -21,12 +21,13 @@ public class MetricsAggregator {
         double errorRate = metricsService.getErrorRate();
         long p95Latency = metricsService.getP95Latency();
         int requestCount = metricsService.getRequestCount();
-
+        double throughput = metricsService.getThroughput();
         MetricsSnapshot snapshot = new MetricsSnapshot(
                 avgLatency,
                 errorRate,
                 p95Latency,
-                requestCount);
+                requestCount,
+                throughput);
 
         // For testing I'm just logging it for now. Will have to think of a way to send
         // it to the ML system
