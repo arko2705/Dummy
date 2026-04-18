@@ -7,7 +7,7 @@ import com.Dummy.demo.monitoring.simulation.*;
 import com.Dummy.demo.service.externalDependency.model.*;
 
 @Component
-public class fakeDBClient {
+public class paymentGatewayClient {
 
     @Autowired
     private circuitBreaker circuitBreaker;
@@ -21,30 +21,30 @@ public class fakeDBClient {
     @Autowired
     private errorSimulator errorSimulator;
 
-    public externalResponse fetchData(externalRequest request) {
+    public externalResponse processPayment(externalRequest request) {
 
         return retryHandler.execute(() -> {
 
-            if (!circuitBreaker.allowRequest("DB")) {
-                throw new RuntimeException("Circuit open for DB");
+            if (!circuitBreaker.allowRequest("PAYMENT")) {
+                throw new RuntimeException("Circuit open for PAYMENT");
             }
 
             try {
-                latencySimulator.applyLatency("DB");	//classes in simulation packages yet to be implemented
-                errorSimulator.checkAndThrow("DB");
+                latencySimulator.applyLatency("PAYMENT"); 	//classes in simulation packages yet to be implemented
+                errorSimulator.checkAndThrow("PAYMENT");
 
-                circuitBreaker.recordSuccess("DB");
+                circuitBreaker.recordSuccess("PAYMENT");
 
                 return new externalResponse(
                         request.getRequestId(),
-                        "DB",
+                        "PAYMENT",
                         true,
-                        "DB fetch successful",
-                        "Sample DB Data"
+                        "Payment successful",
+                        null
                 );
 
             } catch (Exception e) {
-                circuitBreaker.recordFailure("DB");
+                circuitBreaker.recordFailure("PAYMENT");
                 throw e;
             }
         });
