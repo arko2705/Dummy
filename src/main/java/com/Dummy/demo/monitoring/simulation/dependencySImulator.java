@@ -1,5 +1,5 @@
 package com.Dummy.demo.monitoring.simulation;
 
-public class dependencySImulator {
+public class dependencySimulator {
 
 }

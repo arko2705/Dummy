@@ -2,18 +2,25 @@ package com.Dummy.demo.service.externalDependency.client;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import com.Dummy.demo.service.externalDependency.resilience.*;
+
+import com.Dummy.demo.service.externalDependency.simulationConfig;
 import com.Dummy.demo.monitoring.simulation.*;
 import com.Dummy.demo.service.externalDependency.model.*;
+import com.Dummy.demo.service.externalDependency.resilience.rateLimiter;
+import com.Dummy.demo.service.externalDependency.resilience.retryHandler;
+import com.Dummy.demo.service.externalDependency.resilience.circuitBreaker;
 
 @Component
 public class paymentGatewayClient {
 
     @Autowired
-    private circuitBreaker circuitBreaker;
+    private rateLimiter rateLimiter;
 
     @Autowired
     private retryHandler retryHandler;
+
+    @Autowired
+    private circuitBreaker circuitBreaker;
 
     @Autowired
     private latencySimulator latencySimulator;
@@ -21,30 +28,48 @@ public class paymentGatewayClient {
     @Autowired
     private errorSimulator errorSimulator;
 
+    @Autowired
+    private crashSimulator crashSimulator;
+
+    private static final int TIMEOUT_THRESHOLD_MS = simulationConfig.PAYMENT_TIMEOUT;
+
     public externalResponse processPayment(externalRequest request) {
 
         return retryHandler.execute(() -> {
 
-            if (!circuitBreaker.allowRequest("PAYMENT")) {
-                throw new RuntimeException("Circuit open for PAYMENT");
+            String dep = "PAYMENT";
+
+            if (!circuitBreaker.allowRequest(dep)) {
+                throw new RuntimeException("Circuit open");
+            }
+
+            if (!rateLimiter.allowRequest(dep)) {
+                throw new RuntimeException("Rate limit exceeded");
             }
 
             try {
-                latencySimulator.applyLatency("PAYMENT"); 	//classes in simulation packages yet to be implemented
-                errorSimulator.checkAndThrow("PAYMENT");
+                crashSimulator.checkAndCrash(dep);
 
-                circuitBreaker.recordSuccess("PAYMENT");
+                int latency = latencySimulator.applyLatency(dep);// baseLatency+loadBased latency-logic is implemented
+                                                                 // under latencySimulator
+
+                if (latency > TIMEOUT_THRESHOLD_MS) {
+                    throw new RuntimeException("Timeout");
+                }
+
+                errorSimulator.checkAndThrow(dep);// random failure
+
+                circuitBreaker.recordSuccess(dep);
 
                 return new externalResponse(
                         request.getRequestId(),
-                        "PAYMENT",
+                        dep,
                         true,
-                        "Payment successful",
-                        null
-                );
+                        "Payment success",
+                        null);// can add this later for realism
 
             } catch (Exception e) {
-                circuitBreaker.recordFailure("PAYMENT");
+                circuitBreaker.recordFailure(dep);
                 throw e;
             }
         });

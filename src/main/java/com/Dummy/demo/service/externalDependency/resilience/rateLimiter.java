@@ -2,7 +2,9 @@ package com.Dummy.demo.service.externalDependency.resilience;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.stereotype.Component;
 
+@Component
 public class rateLimiter {
 
     private static final int MAX_REQUESTS = 200;
@@ -13,8 +15,8 @@ public class rateLimiter {
         AtomicInteger count;
 
         RateLimitData(long currentWindowStart) {
-            this.currentWindowStart = currentWindowStart;
-            this.count = new AtomicInteger(0);
+            this.currentWindowStart = currentWindowStart;// when the current window starts
+            this.count = new AtomicInteger(0);// how many requests there are in current window
         }
     }
 

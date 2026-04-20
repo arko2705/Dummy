@@ -1,7 +1,9 @@
 package com.Dummy.demo.service.externalDependency.resilience;
 
 import java.util.function.Supplier;
+import org.springframework.stereotype.Component;
 
+@Component
 public class retryHandler {
     private static final int MAX_RETRIES = 3;
     private static final long RETRY_DELAY_MS = 100;
@@ -12,7 +14,7 @@ public class retryHandler {
 
         while (true) {
             try {
-                return action.get(); // try actual call
+                return action.get(); // try actual call. If it returns an error,next line gonna catch it.
             } catch (Exception e) {
                 attempts++;
 
@@ -21,7 +23,8 @@ public class retryHandler {
                 }
 
                 try {
-                    Thread.sleep(RETRY_DELAY_MS);
+                    Thread.sleep(RETRY_DELAY_MS);// real life external systems pe we need to wait,trying instantly gonna
+                                                 // make their chances of failing increase
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }

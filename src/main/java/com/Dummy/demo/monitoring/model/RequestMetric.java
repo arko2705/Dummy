@@ -73,5 +73,4 @@ public class RequestMetric {
 		this.startTime = startTime;
 		this.endTime = endTime;
 	}
-
 }
