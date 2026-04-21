@@ -1,8 +1,10 @@
 package com.Dummy.demo.monitoring.interceptor;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor; //Interface like WebMvcConfigurer
 
+import com.Dummy.demo.monitoring.depSimulation.loadSimulator;
 import com.Dummy.demo.monitoring.service.RequestMetricsService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,12 +19,16 @@ public class MetricsInterceptor implements HandlerInterceptor {
         this.metricsService = metricsService;
     }
 
+    @Autowired
+    private loadSimulator loadSimulator;
+
     @Override
     public boolean preHandle(HttpServletRequest request,
             HttpServletResponse response,
             Object handler) {// HandlerInterceptor Interface's preHandle requires all three params.
         // System.currentTimeMillis() returns the current time in milliseconds since
         // January 1, 1970 UTC
+        loadSimulator.incrementLoad();
         request.setAttribute("startTime", System.currentTimeMillis());// Stores data on the request object (like a
                                                                       // temporary sticky note) that survives until the
                                                                       // response is sent. Other methods
@@ -37,6 +43,7 @@ public class MetricsInterceptor implements HandlerInterceptor {
             HttpServletResponse response,
             Object handler,
             Exception ex) {
+        loadSimulator.decrementLoad();
         String endpoint = request.getRequestURI();
         int statusCode = response.getStatus();
         System.out.println("Interceptor hit: " + endpoint);// getRequestURI returns no domain(localhost:8080),no

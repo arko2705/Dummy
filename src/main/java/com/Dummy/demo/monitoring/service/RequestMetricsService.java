@@ -22,7 +22,7 @@ public class RequestMetricsService {
     List<Long> failureTimestamps = new ArrayList<>();
     List<Long> downtimeStartTimes = new ArrayList<>();
     List<Long> downtimeEndTimes = new ArrayList<>();
-    AtomicInteger totalRequests = new AtomicInteger(0);
+    AtomicInteger totalRequests = new AtomicInteger(0);// tracks total requests from system start.
     AtomicInteger failedRequests = new AtomicInteger(0);
     Queue<Long> requestTimestamps = new LinkedList<>();// for throughput. Keeps timestamps only upto 60 seconds after
                                                        // which polls(removes from front).
@@ -56,7 +56,7 @@ public class RequestMetricsService {
     // Stream is just a collection of objects on which you can directly call
     // multiple functions one after another to create a data processing pipeline
     public double getAverageLatency() {
-        return recentRequests.stream() // .stream() converts collections to steam
+        return recentRequests.stream() // .stream() converts collections to stream
                 .mapToLong(RequestMetric::getLatency) // Basic syntax: ClassName::methodName.
                 .average()
                 .orElse(0.0);

@@ -5,10 +5,16 @@ import com.Dummy.demo.model.cartItem;
 import java.util.ArrayList;
 import java.util.List;
 import com.Dummy.demo.model.Product;
+import com.Dummy.demo.service.internalSimulation.InternalErrorSimulator;
+import com.Dummy.demo.service.internalSimulation.Context;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class cartService {
+
     productService prodService;
+    @Autowired
+    InternalErrorSimulator internalErrorSimulator;
 
     public cartService(productService prodService) {
         this.prodService = prodService;
@@ -21,6 +27,11 @@ public class cartService {
     }
 
     public String addToCart(Integer id, int quantity) {
+        Context ctx = new Context();
+        ctx.service = "cart";
+        ctx.operation = "CART_ADD";
+
+        internalErrorSimulator.inject("CART_ADD", ctx);
         if (itemList.size() > 0) {
             for (cartItem i : itemList) {
                 if (i.getId() == id) {

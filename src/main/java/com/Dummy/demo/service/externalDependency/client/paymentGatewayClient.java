@@ -3,8 +3,8 @@ package com.Dummy.demo.service.externalDependency.client;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.Dummy.demo.monitoring.depSimulation.*;
 import com.Dummy.demo.service.externalDependency.simulationConfig;
-import com.Dummy.demo.monitoring.simulation.*;
 import com.Dummy.demo.service.externalDependency.model.*;
 import com.Dummy.demo.service.externalDependency.resilience.rateLimiter;
 import com.Dummy.demo.service.externalDependency.resilience.retryHandler;

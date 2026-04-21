@@ -1,10 +1,10 @@
-package com.Dummy.demo.service;
+package com.Dummy.demo.monitoring.depSimulation;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
-public class ErrorSimulationService {
+@Component
+public class loadSimulator {
     private AtomicInteger currRequests = new AtomicInteger(0);
 
     public void incrementLoad() {
@@ -17,13 +17,7 @@ public class ErrorSimulationService {
         currRequests.decrementAndGet();
     }
 
-    public long simulateLatency(long delay) {
-        int load = currRequests.get();
-        System.out.println("Load: " + load);
-        if (load > 50)
-            return delay + 300; // ion wanna absolutely hardcode this,will get back to this.
-        if (load > 20)
-            return delay + 150;
-        return delay; // Default latency
+    public int getCurrentLoad() {
+        return currRequests.get();
     }
 }

@@ -5,11 +5,11 @@ import com.Dummy.demo.service.externalDependency.model.externalResponse;
 import com.Dummy.demo.service.externalDependency.resilience.rateLimiter;
 import com.Dummy.demo.service.externalDependency.resilience.retryHandler;
 import com.Dummy.demo.service.externalDependency.resilience.circuitBreaker;
-import com.Dummy.demo.monitoring.simulation.latencySimulator;
-import com.Dummy.demo.monitoring.simulation.errorSimulator;
-import com.Dummy.demo.monitoring.simulation.crashSimulator;
 import com.Dummy.demo.service.externalDependency.model.externalRequest;
 import com.Dummy.demo.service.externalDependency.model.externalResponse;
+import com.Dummy.demo.monitoring.depSimulation.crashSimulator;
+import com.Dummy.demo.monitoring.depSimulation.errorSimulator;
+import com.Dummy.demo.monitoring.depSimulation.latencySimulator;
 import com.Dummy.demo.service.externalDependency.simulationConfig;
 
 import org.springframework.beans.factory.annotation.Autowired;
