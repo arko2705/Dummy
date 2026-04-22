@@ -4,7 +4,6 @@ import org.springframework.stereotype.Service;
 import com.Dummy.demo.model.hostMetricModel;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
-import java.lang.management.ManagementFactory;
 import com.sun.management.OperatingSystemMXBean;
 
 @Service // a bean is created on startup. This is all the project info withOUT visiting

@@ -121,4 +121,13 @@ public class RequestMetricsService {
     public List<Long> getFailureTimestamps() {
         return failureTimestamps;
     }
+
+    public void markSystemDown() {
+        downtimeStartTimes.add(System.currentTimeMillis());
+    }
+
+    public void markSystemUp() {
+        downtimeEndTimes.add(System.currentTimeMillis());
+    }
+
 }
