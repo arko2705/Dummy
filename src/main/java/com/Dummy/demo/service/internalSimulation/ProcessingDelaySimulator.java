@@ -8,12 +8,15 @@ public class ProcessingDelaySimulator implements FailureStrategy {
 
     @Override
     public boolean shouldTrigger(Context ctx) {
-        return random.nextInt(100) < 40; // 40% chance
+        int diceRoll = random.nextInt(100);
+        System.out.println("Processing delay dice roll: " + diceRoll + " for operation: " + ctx.operation);
+        return diceRoll < 40; // 40% chance
     }
 
     @Override
     public void execute(Context ctx) {
         try {
+            System.out.println("Processing delay for " + ctx.operation);
             Thread.sleep(2000); // 2 sec delay
         } catch (InterruptedException e) {
             e.printStackTrace();

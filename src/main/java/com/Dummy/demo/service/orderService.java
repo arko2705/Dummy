@@ -6,19 +6,25 @@ import com.Dummy.demo.model.Order;
 import java.util.ArrayList;
 import com.Dummy.demo.model.cartItem;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.Dummy.demo.service.internalSimulation.InternalErrorSimulator;
+import com.Dummy.demo.service.internalSimulation.Context;
 
 @Service
 public class orderService {
+    @Autowired
     cartService cartService;
-
-    public orderService(cartService cartService) {
-        this.cartService = cartService;
-    }
-
+    @Autowired
+    InternalErrorSimulator internalErrorSimulator;
     List<Order> orderList = new ArrayList<>();
     private int orderIdCounter = 1;
 
     public String createOrder() {
+        Context ctx = new Context();
+        ctx.service = "order";
+        ctx.operation = "ORDER_CREATE";
+        internalErrorSimulator.inject(ctx.operation, ctx);
+
         Double total = 0.0;
         for (cartItem item : cartService.getCart()) {
             total = total + (item.getPrice() * item.getQuantity());
@@ -29,10 +35,19 @@ public class orderService {
     }
 
     public List<Order> getOrders() {
+        Context ctx = new Context();
+        ctx.service = "order";
+        ctx.operation = "ORDER_FETCH";
+        internalErrorSimulator.inject(ctx.operation, ctx);
         return orderList;
     }
 
     public String deleteOrder(int id) {
+        Context ctx = new Context();
+        ctx.service = "order";
+        ctx.operation = "ORDER_DELETE";
+        internalErrorSimulator.inject(ctx.operation, ctx);
+
         for (Order order : orderList) {
             if (order.getOrderId() == id) { // Anything model related,like to access model properties,they are present
                                             // in model class

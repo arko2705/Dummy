@@ -6,23 +6,32 @@ import java.util.ArrayList;
 import com.Dummy.demo.model.Payment;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.Dummy.demo.service.internalSimulation.InternalErrorSimulator;
+import com.Dummy.demo.service.internalSimulation.Context;
 
 @Service
 public class PaymentService {
-
-    private final orderService orderService;
+    @Autowired
+    private orderService orderService;
+    @Autowired
+    private InternalErrorSimulator internalErrorSimulator;
     private List<Payment> paymentList = new ArrayList<>();
     private int paymentIdCounter = 1;
 
-    public PaymentService(orderService orderService) {
-        this.orderService = orderService;
-    }
-
     public List<Payment> getPayments() {
+        Context ctx = new Context();
+        ctx.service = "payment";
+        ctx.operation = "PAYMENT_FETCH";
+        internalErrorSimulator.inject(ctx.operation, ctx);
         return paymentList;
     }
 
     public String processPayment(int orderId, String method) {
+        Context ctx = new Context();
+        ctx.service = "payment";
+        ctx.operation = "PAYMENT_PROCESS";
+        internalErrorSimulator.inject(ctx.operation, ctx);
         System.out.println("Incoming orderId: " + orderId);
 
         Order target = null; // reference same

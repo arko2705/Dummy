@@ -14,8 +14,9 @@ public class InternalErrorSimulator {
     }
 
     public InternalErrorSimulator() {
-        register("CART_ADD", new RandomCartFailure());
-        register("PRODUCT_FETCH", new ProcessingDelaySimulator());
+        // register("CART_ADD", new RandomCartFailure());
+        register("PRODUCT_FETCH", new ProcessingDelaySimulator());// After this go check each of these methods,then come
+                                                                  // back to internalErrorSimulator's inject() frm there
         register("PRODUCT_ADD", new ProcessingDelaySimulator());
         register("PRODUCT_UPDATE", new ProcessingDelaySimulator());
         register("PRODUCT_DELETE", new ProcessingDelaySimulator());

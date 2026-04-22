@@ -11,18 +11,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class cartService {
-
+    @Autowired
     productService prodService;
     @Autowired
     InternalErrorSimulator internalErrorSimulator;
 
-    public cartService(productService prodService) {
-        this.prodService = prodService;
-    }
-
     List<cartItem> itemList = new ArrayList<>();
 
     public List<cartItem> getCart() {
+        Context ctx = new Context();
+        ctx.service = "cart";
+        ctx.operation = "CART_FETCH";
+        internalErrorSimulator.inject(ctx.operation, ctx);
         return itemList;
     }
 
@@ -31,7 +31,7 @@ public class cartService {
         ctx.service = "cart";
         ctx.operation = "CART_ADD";
 
-        internalErrorSimulator.inject("CART_ADD", ctx);
+        internalErrorSimulator.inject(ctx.operation, ctx);
         if (itemList.size() > 0) {
             for (cartItem i : itemList) {
                 if (i.getId() == id) {
@@ -53,6 +53,10 @@ public class cartService {
     }
 
     public String delCartItem(int id) {
+        Context ctx = new Context();
+        ctx.service = "cart";
+        ctx.operation = "CART_DELETE";
+        internalErrorSimulator.inject(ctx.operation, ctx);
         for (cartItem i : itemList) {
             if (i.getId().equals(id)) {
                 itemList.remove(i);

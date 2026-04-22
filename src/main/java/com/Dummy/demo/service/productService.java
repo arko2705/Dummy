@@ -3,13 +3,19 @@ package com.Dummy.demo.service;
 import com.github.javafaker.Faker;
 
 import jakarta.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.Dummy.demo.model.Product;
 import java.util.ArrayList;
 import java.util.List;
+import com.Dummy.demo.service.internalSimulation.InternalErrorSimulator;
+import com.Dummy.demo.service.internalSimulation.Context;
 
 @Service
 public class productService {
+    @Autowired
+    InternalErrorSimulator internalErrorSimulator;
     Faker fakeProd = new Faker();
     public List<Product> prodList = new ArrayList<>();
 
@@ -28,6 +34,10 @@ public class productService {
     }
 
     public String addProduct(String name, Double price) {
+        Context ctx = new Context();
+        ctx.service = "product";
+        ctx.operation = "PRODUCT_ADD";
+        internalErrorSimulator.inject("PRODUCT_ADD", ctx);
         if (name == null || name.isEmpty() || price == null) {
             return "Name and price cannot be empty.";
         }
@@ -37,8 +47,12 @@ public class productService {
     }
 
     public List<Product> getList(String search, Integer size) {
+        Context ctx = new Context();
+        ctx.service = "product";
+        ctx.operation = "PRODUCT_FETCH";
+        internalErrorSimulator.inject("PRODUCT_FETCH", ctx);
         try {
-            Thread.sleep(3000); // Im waitng for 4 seconds to wait for all requests to reach at once.Basically
+            Thread.sleep(2000); // Im waitng for 4 seconds to wait for all requests to reach at once.Basically
                                 // this is put after incrementLoad(),so that it increases count of current
                                 // requests while the others are still processing for 5 seconds.
         } catch (InterruptedException e) {
@@ -67,6 +81,11 @@ public class productService {
     }
 
     public String updateProd(int id, String reqName, Double reqPrice) {
+        Context ctx = new Context();
+        ctx.service = "product";
+        ctx.operation = "PRODUCT_UPDATE";
+        internalErrorSimulator.inject(ctx.operation, ctx);
+
         for (Product p : prodList) {
             if (p.getId() == id) {
                 p.setName(reqName);
@@ -78,6 +97,10 @@ public class productService {
     }
 
     public String delProd(int id) {
+        Context ctx = new Context();
+        ctx.service = "product";
+        ctx.operation = "PRODUCT_DELETE";
+        internalErrorSimulator.inject(ctx.operation, ctx);
         for (Product p : prodList) {
             if (p.getId() == id) {
                 prodList.remove(p);
