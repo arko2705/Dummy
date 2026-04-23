@@ -1,10 +1,16 @@
 package com.Dummy.demo.service.externalDependency.resilience;
 
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.Dummy.demo.service.Simulation.SimulationToggle;
 
 @Component
 public class circuitBreaker {
+    @Autowired
+    private SimulationToggle toggle;
 
     private static class CircuitState {
         int failureCount = 0;
@@ -35,6 +41,8 @@ public class circuitBreaker {
     private static final long OPEN_DURATION_MS = 5000; // 5 seconds
 
     public boolean allowRequest(String dependency) {
+        if (!toggle.FailureisEnabled())// 👈 don’t track
+            return true;
         // FIX: Add state if missing to prevent NPE on first use
         map.putIfAbsent(dependency, new CircuitState());
         CircuitState state = map.get(dependency);
@@ -74,7 +82,8 @@ public class circuitBreaker {
     }
 
     public void recordFailure(String dependency) {
-        map.putIfAbsent(dependency, new CircuitState());
+        if (!toggle.FailureisEnabled())// 👈 don’t record
+            map.putIfAbsent(dependency, new CircuitState());
         CircuitState state = map.get(dependency);
         synchronized (state) {
             if (state.isHalfOpen) {

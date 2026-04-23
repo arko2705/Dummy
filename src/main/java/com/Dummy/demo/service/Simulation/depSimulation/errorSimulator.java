@@ -1,9 +1,10 @@
-package com.Dummy.demo.monitoring.depSimulation;
+package com.Dummy.demo.service.Simulation.depSimulation;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.Dummy.demo.monitoring.depSimulation.stateSimulator.SystemState;
+import com.Dummy.demo.service.Simulation.SimulationToggle;
+import com.Dummy.demo.service.Simulation.depSimulation.stateSimulator.SystemState;
 
 import java.time.LocalTime;
 import java.util.Random;
@@ -14,9 +15,12 @@ public class errorSimulator {
     @Autowired
     private stateSimulator stateSimulator;
     private Random random = new Random();
+    @Autowired
+    private SimulationToggle toggle;
 
     public void checkAndThrow(String dependency) {
-
+        if (!toggle.FailureisEnabled())
+            return;
         stateSimulator.SystemState state = stateSimulator.getCurrentState();
 
         double base = getBaseFailure(dependency);

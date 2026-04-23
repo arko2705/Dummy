@@ -1,11 +1,15 @@
-package com.Dummy.demo.monitoring.depSimulation;
+package com.Dummy.demo.service.Simulation.depSimulation;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Component;
 
+import com.Dummy.demo.monitoring.SystemLoad.SystemLoadTracker;
+
 @Component
-public class stateSimulator {
+public class stateSimulator {// Okay so im confused a bit,i think state simulator is basically how well
+                             // dependencies are performing based on load and random factor.ITS NOT FOR THE
+                             // SYSTEM AFAIK. Please someone confirm
 
     public enum SystemState {
         NORMAL,
@@ -14,7 +18,7 @@ public class stateSimulator {
     }
 
     @Autowired
-    private loadSimulator loadSimulator;
+    private SystemLoadTracker loadSimulator;
 
     public SystemState getCurrentState() {
 

@@ -1,4 +1,4 @@
-package com.Dummy.demo.service.internalSimulation;
+package com.Dummy.demo.service.Simulation.internalSimulation;
 
 import java.util.Random;
 

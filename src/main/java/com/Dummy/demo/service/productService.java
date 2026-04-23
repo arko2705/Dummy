@@ -9,21 +9,32 @@ import org.springframework.stereotype.Service;
 import com.Dummy.demo.model.Product;
 import java.util.ArrayList;
 import java.util.List;
-import com.Dummy.demo.service.internalSimulation.InternalErrorSimulator;
-import com.Dummy.demo.service.internalSimulation.Context;
 import java.util.HashMap;
 import com.Dummy.demo.monitoring.service.RequestMetricsService;
+import com.Dummy.demo.service.Simulation.internalSimulation.Context;
+import com.Dummy.demo.service.Simulation.internalSimulation.InternalErrorSimulator;
+import com.Dummy.demo.service.externalDependency.client.fakeDBClient;
+import com.Dummy.demo.service.externalDependency.client.thirdPartyAPIClient;
+import com.Dummy.demo.service.externalDependency.util.ReqBuilder;
 
+//the try catch if else blocks handle the Internal errors.Go to InternalErrorSimulator
+//api error is non fatal,but db and payment ones are.
 @Service
 public class productService {
     @Autowired
     InternalErrorSimulator internalErrorSimulator;
     @Autowired
     RequestMetricsService metricsService;
+    @Autowired
+    private fakeDBClient dbClient;
+    @Autowired
+    private thirdPartyAPIClient apiClient;
     Faker fakeProd = new Faker();
     public List<Product> prodList = new ArrayList<>();
+    private ReqBuilder reqBuilder;
 
-    public productService() {
+    public productService(ReqBuilder reqBuilder) {
+        this.reqBuilder = reqBuilder;
     }
 
     @PostConstruct // makes this certain method run after service,controller,and rest of the beans
@@ -38,6 +49,13 @@ public class productService {
     }
 
     public String addProduct(String name, Double price) {
+        dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PRODUCT_ADD"));// this causes stale data,random error and
+                                                                            // crash.While our internal causes similar
+                                                                            // things too,GPT said its not
+                                                                            // redundant,they are seperate. Processing
+                                                                            // delay is differnt from dbLatency,so and
+                                                                            // so
+
         Context ctx = new Context();
         ctx.service = "product";
         ctx.operation = "PRODUCT_ADD";
@@ -54,19 +72,26 @@ public class productService {
             prodList.add(new Product(id, name, price));
             return "Product added successfully.";
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
 
             // ⚠️ OPERATION FAILED
-            metricsService.recordFailure();
             throw e;// for now just propagate, reliability handles later
         }
     }
 
     public List<Product> getList(String search, Integer size) {
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PRODUCT_FETCH"));
+        } catch (Exception e) {
+            throw e;
+        }
+        try {
+            apiClient.callAPI(reqBuilder.buildDepRequest("API", "PRODUCT_RECOMMEND"));
+            apiClient.callAPI(reqBuilder.buildDepRequest("API", "PRODUCT_RATING"));
+
+        } catch (Exception e) {
+            // Handle exception
+
+        }
         Context ctx = new Context();
         ctx.service = "product";
         ctx.operation = "PRODUCT_FETCH";
@@ -134,20 +159,20 @@ public class productService {
             return result;
 
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
 
-            // ⚠️ OPERATION FAILED
-            metricsService.recordFailure();
+            // operation failed already registered under interceptor post complete
             throw e; // for now just propagate, reliability handles later
         }
     }
 
     public String updateProd(int id, String reqName, Double reqPrice) {// gotta add these as errors cuz error count
                                                                        // affected
+
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PRODUCT_UPDATE"));
+        } catch (Exception e) {
+            throw e;
+        }
         Context ctx = new Context();
         ctx.service = "product";
         ctx.operation = "PRODUCT_UPDATE";
@@ -195,15 +220,20 @@ public class productService {
                 metricsService.markSystemDown(); // NEW
                 throw e;
             }
-
-            // ⚠️ OPERATION FAILED
-            metricsService.recordFailure();
-            throw e; // for now just propagate, reliability handles later
+            throw e;
         }
 
     }
 
-    public String delProd(int id) {
+    public String delProd(int id) {// when an error thrown,none of the rest of the code will work. The code exits
+                                   // the method
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PRODUCT_DELETE"));
+        } catch (Exception e) {
+            System.out.println("DB Client Error: " + e.getMessage());// oe handle this type of debugging and logging
+                                                                     // stavya and animesh,if i havent already
+            throw e;
+        }
         Context ctx = new Context();
         ctx.service = "product";
         ctx.operation = "PRODUCT_DELETE";
@@ -218,14 +248,7 @@ public class productService {
             return "Product not found";
 
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
-
             // ⚠️ OPERATION FAILED
-            metricsService.recordFailure();
             throw e; // for now just propagate, reliability handles later
         }
     }

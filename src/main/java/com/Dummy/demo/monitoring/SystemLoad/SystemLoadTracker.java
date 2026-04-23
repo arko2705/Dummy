@@ -1,10 +1,10 @@
-package com.Dummy.demo.monitoring.depSimulation;
+package com.Dummy.demo.monitoring.SystemLoad;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.stereotype.Component;
 
 @Component
-public class loadSimulator {
+public class SystemLoadTracker {// tracks currently active requests for the SYSTEM.not dependencies.
     private AtomicInteger currRequests = new AtomicInteger(0);
 
     public void incrementLoad() {

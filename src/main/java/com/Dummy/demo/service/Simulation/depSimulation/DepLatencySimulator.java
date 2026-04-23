@@ -1,20 +1,23 @@
-package com.Dummy.demo.monitoring.depSimulation;
+package com.Dummy.demo.service.Simulation.depSimulation;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Random;
+import com.Dummy.demo.service.Simulation.SimulationToggle;
 
 @Component
-public class latencySimulator {
+public class DepLatencySimulator {
 
     @Autowired
     private stateSimulator stateSimulator;
-
+    @Autowired
+    private SimulationToggle toggle;
     private Random random = new Random();
 
     public int applyLatency(String dependency) {
-
+        if (!toggle.FailureisEnabled())
+            return 0;
         stateSimulator.SystemState state = stateSimulator.getCurrentState();
 
         int baseLatency = getBaseLatency(dependency);

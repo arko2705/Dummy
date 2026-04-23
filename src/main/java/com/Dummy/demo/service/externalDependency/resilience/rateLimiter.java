@@ -2,13 +2,19 @@ package com.Dummy.demo.service.externalDependency.resilience;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.Dummy.demo.service.Simulation.SimulationToggle;
 
 @Component
 public class rateLimiter {
 
     private static final int MAX_REQUESTS = 200;
     private static final long WINDOW_SECONDS = 10;
+    @Autowired
+    private SimulationToggle toggle;
 
     private static class RateLimitData {
         long currentWindowStart; // timestamp when this window started
@@ -23,6 +29,8 @@ public class rateLimiter {
     private ConcurrentHashMap<String, RateLimitData> map = new ConcurrentHashMap<>();
 
     public boolean allowRequest(String dependency) {
+        if (!toggle.FailureisEnabled())
+            return true; // 👈 always allow
         long now = System.currentTimeMillis() / 1000;
         long windowStart = (now / WINDOW_SECONDS) * WINDOW_SECONDS; // Doing 10 second windows. Since getting
                                                                     // divided by integer,it wont give a decimal value.

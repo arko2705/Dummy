@@ -7,11 +7,11 @@ import com.Dummy.demo.service.externalDependency.resilience.retryHandler;
 import com.Dummy.demo.service.externalDependency.resilience.circuitBreaker;
 import com.Dummy.demo.service.externalDependency.model.externalRequest;
 import com.Dummy.demo.service.externalDependency.model.externalResponse;
-import com.Dummy.demo.monitoring.depSimulation.crashSimulator;
-import com.Dummy.demo.monitoring.depSimulation.errorSimulator;
-import com.Dummy.demo.monitoring.depSimulation.latencySimulator;
+import com.Dummy.demo.service.Simulation.depSimulation.crashSimulator;
+import com.Dummy.demo.service.Simulation.depSimulation.errorSimulator;
+import com.Dummy.demo.service.Simulation.depSimulation.DepLatencySimulator;
 import com.Dummy.demo.service.externalDependency.simulationConfig;
-
+import com.Dummy.demo.service.externalDependency.load.DependencyLoadTracker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,68 +28,79 @@ public class thirdPartyAPIClient {
     private circuitBreaker circuitBreaker;
 
     @Autowired
-    private latencySimulator latencySimulator;
+    private DepLatencySimulator latencySimulator;
 
     @Autowired
     private errorSimulator errorSimulator;
 
     @Autowired
     private crashSimulator crashSimulator;
+    @Autowired
+    private DependencyLoadTracker loadTracker;
 
     private static final int TIMEOUT_THRESHOLD_MS = simulationConfig.THIRD_PARTY_TIMEOUT; // third-party is as slow as
                                                                                           // payment gateway
 
     public externalResponse callAPI(externalRequest request) {
+        loadTracker.incAPI();
 
-        return retryHandler.execute(() -> {
+        try {
+            return retryHandler.execute(() -> {
 
-            String dep = "THIRD_PARTY";
+                String dep = "THIRD_PARTY";
 
-            // 1️⃣ Circuit breaker
-            if (!circuitBreaker.allowRequest(dep)) {
-                throw new RuntimeException("Circuit open for THIRD_PARTY");
-            }
-
-            // 2️⃣ Rate limit (this hits often)
-            if (!rateLimiter.allowRequest(dep)) {
-                throw new RuntimeException("Rate limit exceeded for THIRD_PARTY");
-            }
-
-            try {
-                // 3️⃣ Occasional crash (more than DB, less than payment)
-                crashSimulator.checkAndCrash(dep);
-
-                // 4️⃣ High latency
-                int latency = latencySimulator.applyLatency(dep);
-
-                // 5️⃣ Timeout (common)
-                if (latency > TIMEOUT_THRESHOLD_MS) {
-                    throw new RuntimeException("Third-party timeout");
+                // 1️⃣ Circuit breaker
+                if (!circuitBreaker.allowRequest(dep)) {
+                    throw new RuntimeException("Circuit open for THIRD_PARTY");
                 }
 
-                // 6️⃣ High failure rate
-                errorSimulator.checkAndThrow(dep);
+                // 2️⃣ Rate limit (this hits often)
+                if (!rateLimiter.allowRequest(dep)) {
+                    throw new RuntimeException("Rate limit exceeded for THIRD_PARTY");
+                }
 
-                boolean isPartial = Math.random() < 0.2;
+                try {
+                    // 3️⃣ Occasional crash (more than DB, less than payment)
+                    crashSimulator.checkAndCrash(dep);
 
-                Object data = isPartial ? null : "API_DATA";
+                    // 4️⃣ High latency
+                    int latency = latencySimulator.applyLatency(dep);
+                    try {
+                        Thread.sleep(latency);
+                    } catch (Exception e) {
 
-                String message = isPartial
-                        ? "Partial response from third-party"
-                        : "Third-party response success";
-                // 7️⃣ Success
-                circuitBreaker.recordSuccess(dep);
-                return new externalResponse(
-                        request.getRequestId(),
-                        dep,
-                        true,
-                        "Third-party response success",
-                        "API_DATA");
+                    }
+                    // 5️⃣ Timeout (common)
+                    if (latency > TIMEOUT_THRESHOLD_MS) {
+                        throw new RuntimeException("Third-party timeout");
+                    }
 
-            } catch (Exception e) {
-                circuitBreaker.recordFailure(dep);
-                throw e;
-            }
-        });
+                    // 6️⃣ High failure rate
+                    errorSimulator.checkAndThrow(dep);
+
+                    boolean isPartial = Math.random() < 0.2;
+
+                    Object data = isPartial ? "Empty Field" : "API_DATA";
+
+                    String message = isPartial
+                            ? "Partial response from third-party"
+                            : "Third-party response success";
+                    // 7️⃣ Success
+                    circuitBreaker.recordSuccess(dep);
+                    return new externalResponse(
+                            request.getRequestId(),
+                            dep,
+                            true,
+                            message,
+                            data);
+
+                } catch (Exception e) {
+                    circuitBreaker.recordFailure(dep);
+                    throw e;
+                }
+            });
+        } finally {
+            loadTracker.decAPI();
+        }
     }
 }

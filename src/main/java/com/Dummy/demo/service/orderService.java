@@ -7,10 +7,15 @@ import java.util.ArrayList;
 import com.Dummy.demo.model.cartItem;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.Dummy.demo.service.internalSimulation.InternalErrorSimulator;
-import com.Dummy.demo.service.internalSimulation.Context;
+
 import java.util.HashMap;
 import com.Dummy.demo.monitoring.service.RequestMetricsService;
+import com.Dummy.demo.service.Simulation.internalSimulation.Context;
+import com.Dummy.demo.service.Simulation.internalSimulation.InternalErrorSimulator;
+import com.Dummy.demo.service.externalDependency.client.fakeDBClient;
+import com.Dummy.demo.service.externalDependency.client.paymentGatewayClient;
+import com.Dummy.demo.service.externalDependency.client.thirdPartyAPIClient;
+import com.Dummy.demo.service.externalDependency.util.ReqBuilder;
 
 @Service
 public class orderService {
@@ -20,10 +25,40 @@ public class orderService {
     InternalErrorSimulator internalErrorSimulator;
     @Autowired
     RequestMetricsService metricsService;
+    @Autowired
+    private fakeDBClient dbClient;
+    @Autowired
+    private paymentGatewayClient paymentGatewayClient;
+    @Autowired
+    private thirdPartyAPIClient apiClient;
+    private ReqBuilder reqBuilder;
+
+    public orderService(ReqBuilder reqBuilder) {
+        this.reqBuilder = reqBuilder;
+    }
+
     List<Order> orderList = new ArrayList<>();
     private int orderIdCounter = 1;
 
-    public String createOrder() {// wanna implement stale data thing
+    public String createOrder() {// wanna implement stale data thing. but its alr kind of done by dbclient
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "ORDER_CREATE"));
+        } catch (Exception e) {
+            System.out.println("DB Client Error: " + e.getMessage());
+            throw e;
+        }
+        try {
+            apiClient.callAPI(reqBuilder.buildDepRequest("API", "DELIVERY_ESTIMATE"));
+        } catch (Exception e) {
+            System.out.println("API Client Error: Failed to load delivery estimate" + e.getMessage());
+
+        }
+        try {
+            paymentGatewayClient.processPayment(reqBuilder.buildDepRequest("PAYMENT", "PAYMENT_PRECHECK"));
+        } catch (Exception e) {
+            System.out.println("Payment Gateway Client Error: " + e.getMessage());
+            throw e;
+        }
         Context ctx = new Context();
         ctx.service = "order";
         ctx.operation = "ORDER_CREATE";
@@ -55,6 +90,12 @@ public class orderService {
     }
 
     public List<Order> getOrders() {
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "ORDER_FETCH"));
+        } catch (Exception e) {
+            System.out.println("DB Client Error: " + e.getMessage());
+            throw e;
+        }
         Context ctx = new Context();
         ctx.service = "order";
         ctx.operation = "ORDER_FETCH";
@@ -95,6 +136,18 @@ public class orderService {
     }
 
     public String deleteOrder(int id) {
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "ORDER_DELETE"));
+        } catch (Exception e) {
+            System.out.println("DB Client Error: " + e.getMessage());
+            throw e;
+        }
+        try {
+            paymentGatewayClient.processPayment(reqBuilder.buildDepRequest("PAYMENT", "PAYMENT_REFUND"));
+        } catch (Exception e) {
+            System.out.println("Payment Gateway Client Error: Could'nt process refund" + e.getMessage());
+            throw e;
+        }
         Context ctx = new Context();
         ctx.service = "order";
         ctx.operation = "ORDER_DELETE";

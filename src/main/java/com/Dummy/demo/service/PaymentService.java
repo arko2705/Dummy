@@ -7,10 +7,15 @@ import com.Dummy.demo.model.Payment;
 
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.Dummy.demo.service.internalSimulation.InternalErrorSimulator;
-import com.Dummy.demo.service.internalSimulation.Context;
+
 import java.util.HashMap;
 import com.Dummy.demo.monitoring.service.RequestMetricsService;
+import com.Dummy.demo.service.Simulation.internalSimulation.Context;
+import com.Dummy.demo.service.Simulation.internalSimulation.InternalErrorSimulator;
+import com.Dummy.demo.service.externalDependency.client.fakeDBClient;
+import com.Dummy.demo.service.externalDependency.client.paymentGatewayClient;
+import com.Dummy.demo.service.externalDependency.client.thirdPartyAPIClient;
+import com.Dummy.demo.service.externalDependency.util.ReqBuilder;
 
 @Service
 public class PaymentService {
@@ -18,23 +23,35 @@ public class PaymentService {
     private orderService orderService;
     @Autowired
     private RequestMetricsService metricsService;
+    @Autowired
+    private fakeDBClient dbClient;
+    @Autowired
+    private paymentGatewayClient paymentGatewayClient;
+    @Autowired
+    private thirdPartyAPIClient apiClient;
+    @Autowired
     private InternalErrorSimulator internalErrorSimulator;
     private List<Payment> paymentList = new ArrayList<>();
     private int paymentIdCounter = 1;
+    private ReqBuilder reqBuilder;
+
+    public PaymentService(ReqBuilder reqBuilder) {
+        this.reqBuilder = reqBuilder;
+    }
 
     public List<Payment> getPayments() {
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PAYMENT_FETCH"));
+        } catch (Exception e) {
+            System.out.println("DB Client Error: " + e.getMessage());
+            throw e;
+        }
         Context ctx = new Context();
         ctx.service = "payment";
         ctx.operation = "PAYMENT_FETCH";
         try {
             internalErrorSimulator.inject(ctx.operation, ctx);
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
-
             // ⚠️ OPERATION FAILED
             throw e;
         }
@@ -42,6 +59,24 @@ public class PaymentService {
     }
 
     public String processPayment(int orderId, String method) {
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PAYMENT_PRECHECK"));
+        } catch (Exception e) {
+            System.out.println("DB Client Error: " + e.getMessage());
+            throw e;
+        }
+        try {
+            paymentGatewayClient.processPayment(reqBuilder.buildDepRequest("PAYMENT", "PAYMENT_PROCESS"));
+        } catch (Exception e) {
+            System.out.println("Payment Gateway Client Error: " + e.getMessage());
+            throw e;
+        }
+        try {
+            apiClient.callAPI(reqBuilder.buildDepRequest("API", "FRAUD_CHECK"));
+        } catch (Exception e) {
+            System.out.println("API Client Error:Failed to do Fraud check " + e.getMessage());
+            throw e;
+        }
         Context ctx = new Context();
         ctx.service = "payment";
         ctx.operation = "PAYMENT_PROCESS";
@@ -86,11 +121,7 @@ public class PaymentService {
 
             return "Payment successful";
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
+            // Operation failed
             throw e;
         }
     }

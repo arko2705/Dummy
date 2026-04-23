@@ -4,11 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor; //Interface like WebMvcConfigurer
 
-import com.Dummy.demo.monitoring.depSimulation.loadSimulator;
+import com.Dummy.demo.monitoring.SystemLoad.SystemLoadTracker;
 import com.Dummy.demo.monitoring.service.RequestMetricsService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.Dummy.demo.service.SystemState.SystemCrashEngine;
 
 @Component // manage this class as a bean. Go to bottom to see whats happening
 public class MetricsInterceptor implements HandlerInterceptor {
@@ -20,7 +21,9 @@ public class MetricsInterceptor implements HandlerInterceptor {
     }
 
     @Autowired
-    private loadSimulator loadSimulator;
+    private SystemLoadTracker loadSimulator;
+    @Autowired
+    SystemCrashEngine crashEngine;
 
     @Override
     public boolean preHandle(HttpServletRequest request,
@@ -28,7 +31,12 @@ public class MetricsInterceptor implements HandlerInterceptor {
             Object handler) {// HandlerInterceptor Interface's preHandle requires all three params.
         // System.currentTimeMillis() returns the current time in milliseconds since
         // January 1, 1970 UTC
+        crashEngine.evaluateSystemHealth(loadSimulator.getCurrentLoad());
         loadSimulator.incrementLoad();
+        if (crashEngine.isSystemDown()) {
+            System.out.println("Logs for us saying system is down");
+            return false; // block request
+        }
         request.setAttribute("startTime", System.currentTimeMillis());// Stores data on the request object (like a
                                                                       // temporary sticky note) that survives until the
                                                                       // response is sent. Other methods

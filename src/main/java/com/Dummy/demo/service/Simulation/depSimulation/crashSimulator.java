@@ -1,8 +1,11 @@
-package com.Dummy.demo.monitoring.depSimulation;
+package com.Dummy.demo.service.Simulation.depSimulation;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.Dummy.demo.monitoring.SystemLoad.SystemLoadTracker;
 import java.util.Random;
+import com.Dummy.demo.service.Simulation.SimulationToggle;
 
 @Component
 public class crashSimulator {
@@ -11,12 +14,14 @@ public class crashSimulator {
     private stateSimulator stateSimulator;
 
     @Autowired
-    private loadSimulator loadSimulator;
-
+    private SystemLoadTracker loadSimulator;
+    @Autowired
+    private SimulationToggle toggle;
     private Random random = new Random();
 
     public void checkAndCrash(String dependency) {
-
+        if (!toggle.FailureisEnabled())
+            return;
         stateSimulator.SystemState state = stateSimulator.getCurrentState();
         int load = loadSimulator.getCurrentLoad();
 

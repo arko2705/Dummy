@@ -1,8 +1,8 @@
-package com.Dummy.demo.service.internalSimulation;
+package com.Dummy.demo.service.Simulation.internalSimulation;
 
 import java.util.Random;
 
-public class SystemCrashSimulator implements FailureStrategy {
+public class randomEndpointCrash implements FailureStrategy {
 
     private Random random = new Random();
 
@@ -17,8 +17,6 @@ public class SystemCrashSimulator implements FailureStrategy {
         int type = random.nextInt(2);
 
         if (type == 0) {
-            throw new RuntimeException("SYSTEM_DOWN");
-        } else {
             throw new RuntimeException("OPERATION_FAILED: " + ctx.operation);
         }
     }

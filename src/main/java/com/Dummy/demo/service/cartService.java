@@ -6,10 +6,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import com.Dummy.demo.model.Product;
-import com.Dummy.demo.service.internalSimulation.InternalErrorSimulator;
-import com.Dummy.demo.service.internalSimulation.Context;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import com.Dummy.demo.monitoring.service.RequestMetricsService;
+import com.Dummy.demo.service.Simulation.internalSimulation.Context;
+import com.Dummy.demo.service.Simulation.internalSimulation.InternalErrorSimulator;
+import com.Dummy.demo.service.externalDependency.client.fakeDBClient;
+import com.Dummy.demo.service.externalDependency.client.thirdPartyAPIClient;
+import com.Dummy.demo.service.externalDependency.util.ReqBuilder;
 
 @Service
 public class cartService {
@@ -19,10 +23,25 @@ public class cartService {
     InternalErrorSimulator internalErrorSimulator;
     @Autowired
     RequestMetricsService metricsService;
+    @Autowired
+    private fakeDBClient dbClient;
+    @Autowired
+    private thirdPartyAPIClient apiClient;
+    private ReqBuilder reqBuilder;
+
+    public cartService(ReqBuilder reqBuilder) {
+        this.reqBuilder = reqBuilder;
+    }
 
     List<cartItem> itemList = new ArrayList<>();
 
     public List<cartItem> getCart() {
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "CART_FETCH"));
+        } catch (Exception e) {
+            System.out.println("DB Client Error:Coudlnt fetch cart from DB " + e.getMessage());
+            throw e;
+        }
         Context ctx = new Context();
         ctx.service = "cart";
         ctx.operation = "CART_FETCH";
@@ -42,18 +61,24 @@ public class cartService {
             }
             return itemList;
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
-
             // ⚠️ OPERATION FAILED
             throw e;// reliability handles this later,for now just propagate
         }
     }
 
     public String addToCart(Integer id, int quantity) {
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "CART_ADD"));
+        } catch (Exception e) {
+            System.out.println("DB Client Error: Could'nt add to cart in DB " + e.getMessage());
+            throw e;
+        }
+        try {
+            apiClient.callAPI(reqBuilder.buildDepRequest("API", "INVENTORY_CHECK"));
+        } catch (Exception e) {
+            System.out.println("API Client Error: Could'nt check inventory " + e.getMessage());
+            throw e;
+        }
         Context ctx = new Context();// one context fine for multiple strategies,all multiples strategies attached to
                                     // that and in inject it is looped over.
         ctx.service = "cart";
@@ -87,18 +112,18 @@ public class cartService {
             }
             return "Product not found.";
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
-
             // ⚠️ OPERATION FAILED
             throw e;// reliability handles this later,for now just propagate
         }
     }
 
     public String delCartItem(int id) {
+        try {
+            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "CART_DELETE"));
+        } catch (Exception e) {
+            System.out.println("DB Client Error: Could'nt delete item from cart " + e.getMessage());
+            throw e;
+        }
         Context ctx = new Context();
         ctx.service = "cart";
         ctx.operation = "CART_DELETE";
