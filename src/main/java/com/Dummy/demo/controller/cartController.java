@@ -12,6 +12,7 @@ import com.Dummy.demo.model.cartItem;
 import com.Dummy.demo.service.cartService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,8 +29,8 @@ public class cartController {
     }
 
     @GetMapping
-    public List<cartItem> getCart() {
-        return cartservice.getCart();
+    public List<cartItem> getCart(HttpServletRequest request) {
+        return cartservice.getCart(request);
     }
 
     @PostMapping("/add")

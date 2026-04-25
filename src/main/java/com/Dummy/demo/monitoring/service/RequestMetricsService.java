@@ -44,7 +44,7 @@ public class RequestMetricsService {
             failedRequests.incrementAndGet();
             failureTimestamps.add(System.currentTimeMillis());
         }
-        System.out.println("Queue size: " + recentRequests.size());
+        //System.out.println("Queue size: " + recentRequests.size());
     }
 
     // Metrics calculation

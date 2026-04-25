@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import com.Dummy.demo.service.productService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.Dummy.demo.model.Product;
 import java.util.List;
@@ -29,8 +30,9 @@ public class productController {
 
     @GetMapping
     public List<Product> getProducts(@RequestParam(required = false) String search,
-            @RequestParam(required = false) Integer size) {
-        return productService.getList(search, size);
+            @RequestParam(required = false) Integer size,
+            HttpServletRequest request) {
+        return productService.getList(search, size, request);
     }
 
     @PostMapping("/add")

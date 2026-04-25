@@ -17,6 +17,8 @@ import com.Dummy.demo.service.externalDependency.client.paymentGatewayClient;
 import com.Dummy.demo.service.externalDependency.client.thirdPartyAPIClient;
 import com.Dummy.demo.service.externalDependency.util.ReqBuilder;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @Service
 public class orderService {
     @Autowired
@@ -40,29 +42,29 @@ public class orderService {
     List<Order> orderList = new ArrayList<>();
     private int orderIdCounter = 1;
 
-    public String createOrder() {// wanna implement stale data thing. but its alr kind of done by dbclient
+    //passing an HttpServletRequest inorder to attatch the context to the global exception handler where it can extract data from the context
+    public String createOrder(HttpServletRequest request) {// wanna implement stale data thing. but its alr kind of done by dbclient
         try {
             dbClient.fetchData(reqBuilder.buildDepRequest("DB", "ORDER_CREATE"));
         } catch (Exception e) {
-            System.out.println("DB Client Error: " + e.getMessage());
             throw e;
         }
         try {
             apiClient.callAPI(reqBuilder.buildDepRequest("API", "DELIVERY_ESTIMATE"));
         } catch (Exception e) {
-            System.out.println("API Client Error: Failed to load delivery estimate" + e.getMessage());
-
+            //throw e;        //Apparently we are not supposed to throw and exception for callAPI functions?
         }
         try {
             paymentGatewayClient.processPayment(reqBuilder.buildDepRequest("PAYMENT", "PAYMENT_PRECHECK"));
         } catch (Exception e) {
-            System.out.println("Payment Gateway Client Error: " + e.getMessage());
             throw e;
         }
         Context ctx = new Context();
         ctx.service = "order";
         ctx.operation = "ORDER_CREATE";
         ctx.data = new HashMap<>();
+        request.setAttribute("service", ctx.service);
+        request.setAttribute("operation", ctx.operation);
         try {
             internalErrorSimulator.inject(ctx.operation, ctx);
             if (ctx.data.get("emptyOrder") != null) {// Stavya and animesh do your thing bro.
@@ -71,81 +73,78 @@ public class orderService {
                 return "Order created successfully";
             }
             Double total = 0.0;
-            for (cartItem item : cartService.getCart()) {
+            for (cartItem item : cartService.getCartInternal()) {
                 total = total + (item.getPrice() * item.getQuantity());
             }
-            orderList.add(new Order(orderIdCounter, new ArrayList<>(cartService.getCart()), total, "PaymentPending"));
+            orderList.add(new Order(orderIdCounter, new ArrayList<>(cartService.getCartInternal()), total, "PaymentPending"));
             orderIdCounter++;
             return "Order created successfully";
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
-
-            // ⚠️ OPERATION FAILED
             throw e;// for now just propagate, reliability handles later
         }
     }
 
-    public List<Order> getOrders() {
-        try {
-            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "ORDER_FETCH"));
-        } catch (Exception e) {
-            System.out.println("DB Client Error: " + e.getMessage());
-            throw e;
+    // CORE
+    private List<Order> getOrdersCore(Context ctx) {
+        internalErrorSimulator.inject(ctx.operation, ctx);
+
+        if (ctx.data.get("missingOrders") != null) {
+            return orderList.subList(0, orderList.size() / 2);
         }
+
+        if (ctx.data.get("duplicateOrders") != null) {
+            List<Order> temp = new ArrayList<>(orderList);
+            temp.addAll(orderList);
+            return temp;
+        }
+
+        if (ctx.data.get("wrongOrderStatus") != null) {
+            List<Order> temp = new ArrayList<>(orderList);
+            for (Order o : temp) {
+                o.setStatus("DELIVERED");
+            }
+            return temp;
+        }
+
+        return orderList;
+    }
+
+    // CONTROLLER VERSION
+    public List<Order> getOrders(HttpServletRequest request) {
+        dbClient.fetchData(reqBuilder.buildDepRequest("DB", "ORDER_FETCH"));
+
         Context ctx = new Context();
         ctx.service = "order";
         ctx.operation = "ORDER_FETCH";
         ctx.data = new HashMap<>();
-        try {
-            internalErrorSimulator.inject(ctx.operation, ctx);// stavya and animesh do your thing bbgs
-            if (ctx.data.get("missingOrders") != null) {
-                System.out.println("Missing Orders!");
-                return orderList.subList(0, orderList.size() / 2);
-            }
 
-            else if (ctx.data.get("duplicateOrders") != null) {
-                System.out.println("Duplicate Orders!");
-                List<Order> temp = new ArrayList<>(orderList);
-                temp.addAll(orderList);
-                return temp;
-            }
+        request.setAttribute("service", ctx.service);
+        request.setAttribute("operation", ctx.operation);
 
-            else if (ctx.data.get("wrongOrderStatus") != null) {
-                System.out.println("Wrong Order Status!");
-                List<Order> temp = new ArrayList<>(orderList);
-                for (Order o : temp) {
-                    o.setStatus("DELIVERED"); // wrong
-                }
-                return temp;
-            }
-            return orderList;
-        } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
+        return getOrdersCore(ctx);
+    }
 
-            // ⚠️ OPERATION FAILED
-            throw e;
-        }
+    // INTERNAL VERSION
+    public List<Order> getOrdersInternal() {
+        dbClient.fetchData(reqBuilder.buildDepRequest("DB", "ORDER_FETCH"));
+
+        Context ctx = new Context();
+        ctx.service = "order";
+        ctx.operation = "ORDER_FETCH";
+        ctx.data = new HashMap<>();
+
+        return getOrdersCore(ctx);
     }
 
     public String deleteOrder(int id) {
         try {
             dbClient.fetchData(reqBuilder.buildDepRequest("DB", "ORDER_DELETE"));
         } catch (Exception e) {
-            System.out.println("DB Client Error: " + e.getMessage());
             throw e;
         }
         try {
             paymentGatewayClient.processPayment(reqBuilder.buildDepRequest("PAYMENT", "PAYMENT_REFUND"));
         } catch (Exception e) {
-            System.out.println("Payment Gateway Client Error: Could'nt process refund" + e.getMessage());
             throw e;
         }
         Context ctx = new Context();
@@ -163,14 +162,8 @@ public class orderService {
             }
             return "Order not found";
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
-
-            // ⚠️ OPERATION FAILED
-            throw e;// reliability handles this later,for now just propagate
+            //for every error injection in the service layer we remove wherever we record an error. Because it is not service's job to do so. Globla exception handler should handle it.
+            throw e;
         }
     }
 }

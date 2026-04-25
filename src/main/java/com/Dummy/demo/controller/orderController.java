@@ -11,6 +11,7 @@ import com.Dummy.demo.model.Order;
 import com.Dummy.demo.service.orderService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,13 +27,13 @@ public class orderController {
     }
 
     @GetMapping
-    public List<Order> getOrders() {
-        return orderservice.getOrders();
+    public List<Order> getOrders(HttpServletRequest request) {
+        return orderservice.getOrders(request);
     }
 
     @PostMapping("/create")
-    public String createOrder() {
-        return orderservice.createOrder();
+    public String createOrder(HttpServletRequest request) {
+        return orderservice.createOrder(request);
     }
 
     @DeleteMapping("/delete/{id}")

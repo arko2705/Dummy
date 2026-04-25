@@ -17,6 +17,8 @@ import com.Dummy.demo.service.externalDependency.client.paymentGatewayClient;
 import com.Dummy.demo.service.externalDependency.client.thirdPartyAPIClient;
 import com.Dummy.demo.service.externalDependency.util.ReqBuilder;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @Service
 public class PaymentService {
     @Autowired
@@ -39,16 +41,17 @@ public class PaymentService {
         this.reqBuilder = reqBuilder;
     }
 
-    public List<Payment> getPayments() {
+    public List<Payment> getPayments(HttpServletRequest request) {
         try {
             dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PAYMENT_FETCH"));
         } catch (Exception e) {
-            System.out.println("DB Client Error: " + e.getMessage());
             throw e;
         }
         Context ctx = new Context();
         ctx.service = "payment";
         ctx.operation = "PAYMENT_FETCH";
+        request.setAttribute("service", ctx.service);
+        request.setAttribute("operation", ctx.operation);
         try {
             internalErrorSimulator.inject(ctx.operation, ctx);
         } catch (RuntimeException e) {
@@ -62,20 +65,17 @@ public class PaymentService {
         try {
             dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PAYMENT_PRECHECK"));
         } catch (Exception e) {
-            System.out.println("DB Client Error: " + e.getMessage());
             throw e;
         }
         try {
             paymentGatewayClient.processPayment(reqBuilder.buildDepRequest("PAYMENT", "PAYMENT_PROCESS"));
         } catch (Exception e) {
-            System.out.println("Payment Gateway Client Error: " + e.getMessage());
             throw e;
         }
         try {
             apiClient.callAPI(reqBuilder.buildDepRequest("API", "FRAUD_CHECK"));
         } catch (Exception e) {
-            System.out.println("API Client Error:Failed to do Fraud check " + e.getMessage());
-            throw e;
+            //throw e; not supposed to throw apprently
         }
         Context ctx = new Context();
         ctx.service = "payment";
@@ -87,7 +87,7 @@ public class PaymentService {
 
             Order target = null; // reference same
 
-            for (Order o : orderService.getOrders()) {
+            for (Order o : orderService.getOrdersInternal()) {
                 if (o.getOrderId() == orderId) {
                     target = o;
                     break;

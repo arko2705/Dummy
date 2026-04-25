@@ -15,6 +15,8 @@ import com.Dummy.demo.service.externalDependency.client.fakeDBClient;
 import com.Dummy.demo.service.externalDependency.client.thirdPartyAPIClient;
 import com.Dummy.demo.service.externalDependency.util.ReqBuilder;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @Service
 public class cartService {
     @Autowired
@@ -35,48 +37,58 @@ public class cartService {
 
     List<cartItem> itemList = new ArrayList<>();
 
-    public List<cartItem> getCart() {
-        try {
-            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "CART_FETCH"));
-        } catch (Exception e) {
-            System.out.println("DB Client Error:Coudlnt fetch cart from DB " + e.getMessage());
-            throw e;
+    // NEW CORE
+    private List<cartItem> getCartCore(Context ctx) {
+        internalErrorSimulator.inject(ctx.operation, ctx);      //error thrown here, no need for try catch because if where we do catch we simply throw it again
+
+        if (ctx.data.get("missingCartItems") != null) {
+            return itemList.subList(0, itemList.size() / 2);
         }
+
+        if (ctx.data.get("duplicateCartItems") != null) {
+            List<cartItem> temp = new ArrayList<>(itemList);
+            temp.addAll(itemList);
+            return temp;
+        }
+        return itemList;
+    }
+
+    // CONTROLLER VERSION
+    public List<cartItem> getCart(HttpServletRequest request) {
+        dbClient.fetchData(reqBuilder.buildDepRequest("DB", "CART_FETCH"));
+
         Context ctx = new Context();
         ctx.service = "cart";
         ctx.operation = "CART_FETCH";
         ctx.data = new HashMap<>();
-        try {
-            internalErrorSimulator.inject(ctx.operation, ctx);
-            if (ctx.data.get("missingCartItems") != null) {// newer errors i will make,unique errors. StaleCart is a
-                                                           // really
-                                                           // good concept,i dont have time right now.
-                return itemList.subList(0, itemList.size() / 2);
-            }
 
-            if (ctx.data.get("duplicateCartItems") != null) {
-                List<cartItem> temp = new ArrayList<>(itemList);
-                temp.addAll(itemList);
-                return temp;
-            }
-            return itemList;
-        } catch (RuntimeException e) {
-            // ⚠️ OPERATION FAILED
-            throw e;// reliability handles this later,for now just propagate
-        }
+        request.setAttribute("service", ctx.service);
+        request.setAttribute("operation", ctx.operation);
+
+        return getCartCore(ctx);
+    }
+
+    // INTERNAL VERSION
+    public List<cartItem> getCartInternal() {
+        dbClient.fetchData(reqBuilder.buildDepRequest("DB", "CART_FETCH"));
+
+        Context ctx = new Context();
+        ctx.service = "cart";
+        ctx.operation = "CART_FETCH";
+        ctx.data = new HashMap<>();
+
+        return getCartCore(ctx);
     }
 
     public String addToCart(Integer id, int quantity) {
         try {
             dbClient.fetchData(reqBuilder.buildDepRequest("DB", "CART_ADD"));
         } catch (Exception e) {
-            System.out.println("DB Client Error: Could'nt add to cart in DB " + e.getMessage());
             throw e;
         }
         try {
             apiClient.callAPI(reqBuilder.buildDepRequest("API", "INVENTORY_CHECK"));
         } catch (Exception e) {
-            System.out.println("API Client Error: Could'nt check inventory " + e.getMessage());
             throw e;
         }
         Context ctx = new Context();// one context fine for multiple strategies,all multiples strategies attached to
@@ -99,7 +111,7 @@ public class cartService {
                     }
                 }
             }
-            for (Product i : prodService.getList(null, null)) {
+            for (Product i : prodService.getListInternal(null, null)) {
                 if (i.getId().equals(id)) { // Had to do .equals() to compare values,else its some bullshit Integer
                                             // objects
                                             // have a rule regarding,that beyond beyond 127 it compares references or sm
@@ -112,8 +124,7 @@ public class cartService {
             }
             return "Product not found.";
         } catch (RuntimeException e) {
-            // ⚠️ OPERATION FAILED
-            throw e;// reliability handles this later,for now just propagate
+            throw e;//globalExceptionHandler handles this later,for now just propagate
         }
     }
 
@@ -121,7 +132,6 @@ public class cartService {
         try {
             dbClient.fetchData(reqBuilder.buildDepRequest("DB", "CART_DELETE"));
         } catch (Exception e) {
-            System.out.println("DB Client Error: Could'nt delete item from cart " + e.getMessage());
             throw e;
         }
         Context ctx = new Context();
@@ -137,14 +147,6 @@ public class cartService {
             }
             return "Item not found in cart.";
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
-
-            // ⚠️ OPERATION FAILED
-            // metricsService.recordFailure(); // This is already handled by the interceptor
             throw e;// reliability handles this later,for now just propagate
         }
     }

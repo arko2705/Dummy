@@ -1,5 +1,9 @@
 package com.Dummy.demo.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -8,6 +12,9 @@ import com.Dummy.demo.service.HostMetricsService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import com.Dummy.demo.model.hostMetricModel;
+import com.Dummy.demo.monitoring.model.MetricsSnapshot;
+import com.Dummy.demo.monitoring.service.MetricsAggregator;
+import com.Dummy.demo.monitoring.service.RequestMetricsService;
 
 @RestController
 @RequestMapping("/api")
@@ -20,6 +27,10 @@ public class metricsController {
 
     // declare class as a object like Employee employee bro
     private HostMetricsService hostService;
+    @Autowired
+    private MetricsAggregator aggregator;
+    @Autowired
+    private RequestMetricsService metricsService;
 
     public metricsController(HostMetricsService hostService) { // Something i entirely missed,but basically Spring
                                                                // creates bean components labelled with "@" at startup,
@@ -28,6 +39,32 @@ public class metricsController {
                                                                // injected here to eequal local hostSerice to original.
         this.hostService = hostService;
     }
+
+    @GetMapping("/metrics")
+    public MetricsSnapshot getMetrics() {
+        return aggregator.getLatestSnapshot();
+    }
+
+    @GetMapping("/metrics/details")
+    public Map<String, Object> getDetailedMetrics() {
+
+        Map<String, Object> data = new HashMap<>();
+
+        data.put("totalRequests", metricsService.getTotalRequests());
+        data.put("failedRequests", metricsService.getFailedRequests());
+        data.put("errorRate", metricsService.getErrorRate());
+        data.put("avgLatency", metricsService.getAverageLatency());
+        data.put("p95Latency", metricsService.getP95Latency());
+        data.put("throughput", metricsService.getThroughput());
+        data.put("failureTimestamps", metricsService.getFailureTimestamps());
+        data.put("downtimeStart", metricsService.getdownTimeStartTimes());
+        data.put("downtimeEnd", metricsService.getdownTimeEndTimes());
+
+        return data;
+    }
+
+    
+
 
     @GetMapping("/hostMetrics")
     public hostMetricModel getHostMetrics() {

@@ -35,7 +35,7 @@ public class MetricsInterceptor implements HandlerInterceptor {
         loadSimulator.incrementLoad();
         if (crashEngine.isSystemDown()) {
             System.out.println("Logs for us saying system is down");
-            return false; // block request
+            throw new RuntimeException("SYSTEM_DOWN"); // replaced the "false" because otherwise it will not trigger the controller or smth
         }
         request.setAttribute("startTime", System.currentTimeMillis());// Stores data on the request object (like a
                                                                       // temporary sticky note) that survives until the

@@ -25,4 +25,44 @@ public class MetricsSnapshot {
                 ", throughput=" + throughput +
                 '}';
     }
+
+    public double getAvgLatency() {
+        return avgLatency;
+    }
+
+    public void setAvgLatency(double avgLatency) {
+        this.avgLatency = avgLatency;
+    }
+
+    public double getErrorRate() {
+        return errorRate;
+    }
+
+    public void setErrorRate(double errorRate) {
+        this.errorRate = errorRate;
+    }
+
+    public long getP95Latency() {
+        return p95Latency;
+    }
+
+    public void setP95Latency(long p95Latency) {
+        this.p95Latency = p95Latency;
+    }
+
+    public int getRequestCount() {
+        return requestCount;
+    }
+
+    public void setRequestCount(int requestCount) {
+        this.requestCount = requestCount;
+    }
+
+    public double getThroughput() {
+        return throughput;
+    }
+
+    public void setThroughput(double throughput) {
+        this.throughput = throughput;
+    }
 }

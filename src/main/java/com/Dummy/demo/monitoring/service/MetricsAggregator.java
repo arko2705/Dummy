@@ -10,6 +10,8 @@ public class MetricsAggregator {
 
     private final RequestMetricsService metricsService;
 
+    private volatile MetricsSnapshot latestSnapshot; // store latest snapshot
+
     public MetricsAggregator(RequestMetricsService metricsService) {
         this.metricsService = metricsService;
     }
@@ -28,9 +30,15 @@ public class MetricsAggregator {
                 p95Latency,
                 requestCount,
                 throughput);
+        
+        latestSnapshot = snapshot;
 
         // For testing I'm just logging it for now. Will have to think of a way to send
         // it to the ML system
-        System.out.println(snapshot);
+        //System.out.println(snapshot);
+
+    }
+    public MetricsSnapshot getLatestSnapshot() {
+        return latestSnapshot;
     }
 }

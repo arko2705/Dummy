@@ -3,6 +3,7 @@ package com.Dummy.demo.service;
 import com.github.javafaker.Faker;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -72,97 +73,83 @@ public class productService {
             prodList.add(new Product(id, name, price));
             return "Product added successfully.";
         } catch (RuntimeException e) {
-
-            // ⚠️ OPERATION FAILED
-            throw e;// for now just propagate, reliability handles later
+            throw e;// for now just propagate, globalExceptionHandler handles later
         }
     }
 
-    public List<Product> getList(String search, Integer size) {
-        try {
-            dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PRODUCT_FETCH"));
-        } catch (Exception e) {
-            throw e;
+    // CORE
+    private List<Product> getListCore(String search, Integer size, Context ctx) {
+        internalErrorSimulator.inject(ctx.operation, ctx);
+
+        List<Product> result = new ArrayList<>();
+
+        if (search == null || search.isEmpty()) {
+            result = new ArrayList<>(prodList);
+        } else {
+            for (Product prod : prodList) {
+                if (prod.getName().toLowerCase().contains(search.toLowerCase())) {
+                    result.add(prod);
+                }
+            }
         }
+
+        if (size != null && size < result.size()) {
+            return result.subList(0, size);
+        }
+
+        if (ctx.data.get("missingProducts") != null) {
+            return result.subList(0, result.size() / 2);
+        }
+
+        if (ctx.data.get("duplicateProducts") != null) {
+            List<Product> temp = new ArrayList<>(result);
+            temp.addAll(result);
+            return temp;
+        }
+
+        if (ctx.data.get("staleProductData") != null) {
+            for (Product p : result) {
+                p.setPrice(p.getPrice() - 10);
+            }
+            return result;
+        }
+
+        return result;
+    }
+
+    // CONTROLLER VERSION
+    public List<Product> getList(String search, Integer size, HttpServletRequest request) {
+        dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PRODUCT_FETCH"));
         try {
             apiClient.callAPI(reqBuilder.buildDepRequest("API", "PRODUCT_RECOMMEND"));
             apiClient.callAPI(reqBuilder.buildDepRequest("API", "PRODUCT_RATING"));
+        } catch (Exception ignored) {}
 
-        } catch (Exception e) {
-            // Handle exception
-
-        }
         Context ctx = new Context();
         ctx.service = "product";
         ctx.operation = "PRODUCT_FETCH";
         ctx.data = new HashMap<>();
+
+        request.setAttribute("service", ctx.service);
+        request.setAttribute("operation", ctx.operation);
+
+        return getListCore(search, size, ctx);
+    }
+
+    // INTERNAL VERSION
+    public List<Product> getListInternal(String search, Integer size) {
+        dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PRODUCT_FETCH"));
         try {
-            internalErrorSimulator.inject(ctx.operation, ctx);
+            apiClient.callAPI(reqBuilder.buildDepRequest("API", "PRODUCT_RECOMMEND"));
+            apiClient.callAPI(reqBuilder.buildDepRequest("API", "PRODUCT_RATING"));
+        } catch (Exception ignored) {}
 
-            // try {
-            // Thread.sleep(2000); // Im waitng for 4 seconds to wait for all requests to
-            // reach at once.Basically
-            // // this is put after incrementLoad(),so that it increases count of current
-            // // requests while the others are still processing for 5 seconds.
-            // } catch (InterruptedException e) {
-            // System.out.println("some error");
-            // }
-            List<Product> result = new ArrayList<>();
-            // Start with full list if no search
-            if (search == null || search.isEmpty()) {
-                result = new ArrayList<>(prodList);
-            } else {
-                for (Product prod : prodList) {
-                    if (prod.getName().toLowerCase().contains(search.toLowerCase())) {
-                        result.add(prod);
-                    }
-                }
-            }
-            // Apply size limit
-            if (size != null && size < result.size()) {
-                List<Product> limited = new ArrayList<>();
-                for (int i = 0; i < size; i++) {
-                    limited.add(result.get(i));
-                }
-                return limited;
-            }
+        Context ctx = new Context();
+        ctx.service = "product";
+        ctx.operation = "PRODUCT_FETCH";
+        ctx.data = new HashMap<>();
 
-            if (ctx.data.get("missingProducts") != null) {// errors,need to log. Since i have actually changed the
-                                                          // return
-                                                          // data instead of sayng that error has been made,see if there
-                                                          // is
-                                                          // some clever way for the ML to interpret the results and see
-                                                          // that this is wrong(eg SLO and actual ouput comparison),else
-                                                          // we
-                                                          // will just revert back to logs since i think thats
-                                                          // unnecessary
-                                                          // processing. Like lets say duplicate causes sudden spike in
-                                                          // response size,etc etc.ML shld see that,not just a
-                                                          // "duplicate
-                                                          // products" thingy
-                System.out.println("Missing PRODUCTS!");
-                List<Product> temp = new ArrayList<>(result);
-                return temp.subList(0, temp.size() / 2); // Simulate missing data by returning only half the results
-            } else if (ctx.data.get("duplicateProducts") != null) {
-                System.out.println("Duplicate PRODUCTS!");
-                List<Product> temp = new ArrayList<>(result);
-                temp.addAll(new ArrayList<>(temp));
-                return temp;
-            } else if (ctx.data.get("staleProductData") != null) {
-                System.out.println("Stale PRODUCT DATA!");
-                List<Product> temp = new ArrayList<>(result);
-                for (Product p : temp) {
-                    p.setPrice(p.getPrice() - 10); // Simulate stale data by reducing the price
-                }
-                return temp;
-            }
-            return result;
-
-        } catch (RuntimeException e) {
-
-            // operation failed already registered under interceptor post complete
-            throw e; // for now just propagate, reliability handles later
-        }
+        return getListCore(search, size, ctx);
     }
 
     public String updateProd(int id, String reqName, Double reqPrice) {// gotta add these as errors cuz error count
@@ -215,11 +202,6 @@ public class productService {
             return "Product not found";
 
         } catch (RuntimeException e) {
-            // 🔥 SYSTEM DOWN
-            if (e.getMessage().equals("SYSTEM_DOWN")) {
-                metricsService.markSystemDown(); // NEW
-                throw e;
-            }
             throw e;
         }
 
@@ -230,8 +212,6 @@ public class productService {
         try {
             dbClient.fetchData(reqBuilder.buildDepRequest("DB", "PRODUCT_DELETE"));
         } catch (Exception e) {
-            System.out.println("DB Client Error: " + e.getMessage());// oe handle this type of debugging and logging
-                                                                     // stavya and animesh,if i havent already
             throw e;
         }
         Context ctx = new Context();
@@ -248,8 +228,7 @@ public class productService {
             return "Product not found";
 
         } catch (RuntimeException e) {
-            // ⚠️ OPERATION FAILED
-            throw e; // for now just propagate, reliability handles later
+            throw e;
         }
     }
 }

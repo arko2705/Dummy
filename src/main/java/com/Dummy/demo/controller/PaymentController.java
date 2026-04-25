@@ -8,6 +8,8 @@ import com.Dummy.demo.model.PaymentRequest;
 //import com.Dummy.demo.model.Payment;
 import com.Dummy.demo.service.PaymentService;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 //import io.swagger.v3.oas.annotations.parameters.RequestBody;   buddy delete this import
 import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
@@ -24,8 +26,8 @@ public class PaymentController {
     }
 
     @GetMapping
-    public List<Payment> getPayments() {
-        return paymentService.getPayments();
+    public List<Payment> getPayments(HttpServletRequest request) {
+        return paymentService.getPayments(request);
     }
 
     @PostMapping("/make")
