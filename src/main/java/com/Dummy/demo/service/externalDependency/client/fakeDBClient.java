@@ -9,6 +9,7 @@ import com.Dummy.demo.service.Simulation.depSimulation.errorSimulator;
 import com.Dummy.demo.service.Simulation.depSimulation.DepLatencySimulator;
 import com.Dummy.demo.service.externalDependency.simulationConfig;
 import com.Dummy.demo.service.externalDependency.load.DependencyLoadTracker;
+import com.Dummy.demo.monitoring.dependency.service.DependencyMetricsService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class fakeDBClient {
     private errorSimulator errorSimulator;
     @Autowired
     private DependencyLoadTracker loadTracker;
+    @Autowired
+    private DependencyMetricsService dependencyMetricsService;
     private final int TIMEOUT_THRESHOLD_MS = simulationConfig.DB_TIMEOUT;
     private Random random = new Random();
 
@@ -44,6 +47,7 @@ public class fakeDBClient {
             return retryHandler.execute(() -> {
 
                 String dep = "DB";
+                String depMetricName = "DB";
 
                 if (!circuitBreaker.allowRequest(dep)) {
                     throw new RuntimeException("Circuit open for DB");
@@ -53,6 +57,8 @@ public class fakeDBClient {
                 // throw new RuntimeException("Rate limit exceeded for DB");
                 // }dbs dont have rate limiters
 
+                long start = System.currentTimeMillis();
+                boolean success = false;
                 try {
                     // 1️⃣ Latency (DB is faster)
                     int latency = latencySimulator.applyLatency(dep);
@@ -74,6 +80,7 @@ public class fakeDBClient {
                     Object data = isStale ? "OLD_DATA_VERSION" : "LATEST_DATA";
 
                     circuitBreaker.recordSuccess(dep);
+                    success = true;
 
                     return new externalResponse(
                             request.getRequestId(),
@@ -85,6 +92,11 @@ public class fakeDBClient {
                 } catch (Exception e) {
                     circuitBreaker.recordFailure(dep);
                     throw e;
+                } finally {
+                    // Records each dependency call attempt (including retries) without
+                    // altering failure propagation behavior.
+                    long end = System.currentTimeMillis();
+                    dependencyMetricsService.recordDependencyCall(depMetricName, end - start, success);
                 }
             });
         } finally {

@@ -10,6 +10,7 @@ import com.Dummy.demo.service.externalDependency.resilience.rateLimiter;
 import com.Dummy.demo.service.externalDependency.resilience.retryHandler;
 import com.Dummy.demo.service.externalDependency.resilience.circuitBreaker;
 import com.Dummy.demo.service.externalDependency.load.DependencyLoadTracker;
+import com.Dummy.demo.monitoring.dependency.service.DependencyMetricsService;
 
 @Component
 public class paymentGatewayClient {
@@ -33,6 +34,8 @@ public class paymentGatewayClient {
     private crashSimulator crashSimulator;
     @Autowired
     private DependencyLoadTracker loadTracker;
+    @Autowired
+    private DependencyMetricsService dependencyMetricsService;
 
     private static final int TIMEOUT_THRESHOLD_MS = simulationConfig.PAYMENT_TIMEOUT;
 
@@ -42,6 +45,7 @@ public class paymentGatewayClient {
             return retryHandler.execute(() -> {
 
                 String dep = "PAYMENT";
+                String depMetricName = "PAYMENT";
 
                 if (!circuitBreaker.allowRequest(dep)) {
                     throw new RuntimeException("Circuit open");
@@ -51,6 +55,8 @@ public class paymentGatewayClient {
                     throw new RuntimeException("Rate limit exceeded");
                 }
 
+                long start = System.currentTimeMillis();
+                boolean success = false;
                 try {
                     crashSimulator.checkAndCrash(dep);
 
@@ -69,6 +75,7 @@ public class paymentGatewayClient {
                     errorSimulator.checkAndThrow(dep);// random failure
 
                     circuitBreaker.recordSuccess(dep);
+                    success = true;
 
                     return new externalResponse(
                             request.getRequestId(),
@@ -80,6 +87,9 @@ public class paymentGatewayClient {
                 } catch (Exception e) {
                     circuitBreaker.recordFailure(dep);
                     throw e;
+                } finally {
+                    long end = System.currentTimeMillis();
+                    dependencyMetricsService.recordDependencyCall(depMetricName, end - start, success);
                 }
             });
         } finally {

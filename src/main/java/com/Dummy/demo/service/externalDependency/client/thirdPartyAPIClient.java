@@ -12,6 +12,7 @@ import com.Dummy.demo.service.Simulation.depSimulation.errorSimulator;
 import com.Dummy.demo.service.Simulation.depSimulation.DepLatencySimulator;
 import com.Dummy.demo.service.externalDependency.simulationConfig;
 import com.Dummy.demo.service.externalDependency.load.DependencyLoadTracker;
+import com.Dummy.demo.monitoring.dependency.service.DependencyMetricsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +38,8 @@ public class thirdPartyAPIClient {
     private crashSimulator crashSimulator;
     @Autowired
     private DependencyLoadTracker loadTracker;
+    @Autowired
+    private DependencyMetricsService dependencyMetricsService;
 
     private static final int TIMEOUT_THRESHOLD_MS = simulationConfig.THIRD_PARTY_TIMEOUT; // third-party is as slow as
                                                                                           // payment gateway
@@ -48,6 +51,7 @@ public class thirdPartyAPIClient {
             return retryHandler.execute(() -> {
 
                 String dep = "THIRD_PARTY";
+                String depMetricName = "API";
 
                 // 1️⃣ Circuit breaker
                 if (!circuitBreaker.allowRequest(dep)) {
@@ -59,6 +63,8 @@ public class thirdPartyAPIClient {
                     throw new RuntimeException("Rate limit exceeded for THIRD_PARTY");
                 }
 
+                long start = System.currentTimeMillis();
+                boolean success = false;
                 try {
                     // 3️⃣ Occasional crash (more than DB, less than payment)
                     crashSimulator.checkAndCrash(dep);
@@ -87,6 +93,7 @@ public class thirdPartyAPIClient {
                             : "Third-party response success";
                     // 7️⃣ Success
                     circuitBreaker.recordSuccess(dep);
+                    success = true;
                     return new externalResponse(
                             request.getRequestId(),
                             dep,
@@ -97,6 +104,9 @@ public class thirdPartyAPIClient {
                 } catch (Exception e) {
                     circuitBreaker.recordFailure(dep);
                     throw e;
+                } finally {
+                    long end = System.currentTimeMillis();
+                    dependencyMetricsService.recordDependencyCall(depMetricName, end - start, success);
                 }
             });
         } finally {

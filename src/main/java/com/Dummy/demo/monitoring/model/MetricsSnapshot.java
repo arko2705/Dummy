@@ -1,18 +1,36 @@
 package com.Dummy.demo.monitoring.model;
 
+import java.util.Map;
+
+import com.Dummy.demo.monitoring.dependency.model.DependencyMetric;
+
 public class MetricsSnapshot {
     private double avgLatency;
     private double errorRate;
     private long p95Latency;
     private int requestCount;
     private double throughput;
+    private Map<String, EndpointMetric> endpointMetrics;
+    private Map<String, DependencyMetric> dependencyMetrics;
 
     public MetricsSnapshot(double avgLatency, double errorRate, long p95Latency, int requestCount, double throughput) {
+        this(avgLatency, errorRate, p95Latency, requestCount, throughput, Map.of(), Map.of());
+    }
+
+    public MetricsSnapshot(double avgLatency, double errorRate, long p95Latency, int requestCount, double throughput,
+            Map<String, EndpointMetric> endpointMetrics) {
+        this(avgLatency, errorRate, p95Latency, requestCount, throughput, endpointMetrics, Map.of());
+    }
+
+    public MetricsSnapshot(double avgLatency, double errorRate, long p95Latency, int requestCount, double throughput,
+            Map<String, EndpointMetric> endpointMetrics, Map<String, DependencyMetric> dependencyMetrics) {
         this.avgLatency = avgLatency;
         this.errorRate = errorRate;
         this.p95Latency = p95Latency;
         this.requestCount = requestCount;
         this.throughput = throughput;
+        this.endpointMetrics = endpointMetrics;
+        this.dependencyMetrics = dependencyMetrics;
     }
 
     @Override
@@ -23,6 +41,8 @@ public class MetricsSnapshot {
                 ", p95Latency=" + p95Latency +
                 ", requestCount=" + requestCount +
                 ", throughput=" + throughput +
+                ", endpointMetrics=" + endpointMetrics +
+                ", dependencyMetrics=" + dependencyMetrics +
                 '}';
     }
 
@@ -64,5 +84,21 @@ public class MetricsSnapshot {
 
     public void setThroughput(double throughput) {
         this.throughput = throughput;
+    }
+
+    public Map<String, EndpointMetric> getEndpointMetrics() {
+        return endpointMetrics;
+    }
+
+    public void setEndpointMetrics(Map<String, EndpointMetric> endpointMetrics) {
+        this.endpointMetrics = endpointMetrics;
+    }
+
+    public Map<String, DependencyMetric> getDependencyMetrics() {
+        return dependencyMetrics;
+    }
+
+    public void setDependencyMetrics(Map<String, DependencyMetric> dependencyMetrics) {
+        this.dependencyMetrics = dependencyMetrics;
     }
 }

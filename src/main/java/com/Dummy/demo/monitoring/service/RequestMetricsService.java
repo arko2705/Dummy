@@ -53,6 +53,11 @@ public class RequestMetricsService {
         return recentRequests.size();
     }
 
+    /** Returns a point-in-time copy of recent request metrics for aggregation. */
+    public List<RequestMetric> getRecentRequestsSnapshot() {
+        return List.copyOf(recentRequests);
+    }
+
     // Stream is just a collection of objects on which you can directly call
     // multiple functions one after another to create a data processing pipeline
     public double getAverageLatency() {
