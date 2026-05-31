@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Random;
 
+import com.Dummy.demo.monitoring.internal.model.InternalEventType;
+import com.Dummy.demo.monitoring.internal.service.InternalMetricsService;
 import com.Dummy.demo.monitoring.service.RequestMetricsService;
 
 //I(arko) need to understand this entirely,have an idea 
@@ -11,13 +13,15 @@ import com.Dummy.demo.monitoring.service.RequestMetricsService;
 public class SystemCrashEngine {
 
     private final RequestMetricsService metricsService;
+    private final InternalMetricsService internalMetricsService;
     private final Random random = new Random();
 
     private boolean systemDown = false;
     private long recoveryTime = 0;
 
-    public SystemCrashEngine(RequestMetricsService metricsService) {
+    public SystemCrashEngine(RequestMetricsService metricsService, InternalMetricsService internalMetricsService) {
         this.metricsService = metricsService;
+        this.internalMetricsService = internalMetricsService;
     }
 
     // called before processing request OR inside interceptor
@@ -48,6 +52,7 @@ public class SystemCrashEngine {
 
             systemDown = true;
             metricsService.markSystemDown();
+            internalMetricsService.recordEvent(InternalEventType.SYSTEM_CRASH, "SYSTEM_HEALTH_CHECK", "system");
 
             // ⏱ non-linear downtime (important)
             long downtime = (long) (2000 +

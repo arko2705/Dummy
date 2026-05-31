@@ -13,6 +13,7 @@ import com.Dummy.demo.service.Simulation.depSimulation.DepLatencySimulator;
 import com.Dummy.demo.service.externalDependency.simulationConfig;
 import com.Dummy.demo.service.externalDependency.load.DependencyLoadTracker;
 import com.Dummy.demo.monitoring.dependency.service.DependencyMetricsService;
+import com.Dummy.demo.monitoring.error.service.errorLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,8 @@ public class thirdPartyAPIClient {
     private DependencyLoadTracker loadTracker;
     @Autowired
     private DependencyMetricsService dependencyMetricsService;
+    @Autowired
+    private errorLogService errorLogService;
 
     private static final int TIMEOUT_THRESHOLD_MS = simulationConfig.THIRD_PARTY_TIMEOUT; // third-party is as slow as
                                                                                           // payment gateway
@@ -109,6 +112,9 @@ public class thirdPartyAPIClient {
                     dependencyMetricsService.recordDependencyCall(depMetricName, end - start, success);
                 }
             });
+        } catch (Exception e) {
+            errorLogService.logDependencyFailure("API", e, errorLogService.extractOperation(request));
+            throw e;
         } finally {
             loadTracker.decAPI();
         }

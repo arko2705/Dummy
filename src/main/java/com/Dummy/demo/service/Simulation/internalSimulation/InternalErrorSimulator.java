@@ -4,12 +4,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import com.Dummy.demo.monitoring.error.model.ErrorCategory;
+import com.Dummy.demo.monitoring.error.service.errorLogService;
+import com.Dummy.demo.monitoring.internal.model.InternalEventType;
+import com.Dummy.demo.monitoring.internal.service.InternalMetricsService;
 import com.Dummy.demo.service.Simulation.SimulationToggle;
 
 @Service
 public class InternalErrorSimulator {
     @Autowired
     private SimulationToggle toggle;
+    @Autowired
+    private errorLogService errorLogService;
+    @Autowired
+    private InternalMetricsService internalMetricsService;
     private final Map<String, List<FailureStrategy>> registry = new HashMap<>();
 
     public void register(String key, FailureStrategy strategy) {
@@ -67,7 +75,91 @@ public class InternalErrorSimulator {
         for (FailureStrategy s : strategies) {
             if (s.shouldTrigger(ctx)) {
                 s.execute(ctx);
+                recordInternalEvent(s, ctx);
+                logSimulationEvent(s, ctx);
             }
         }
+    }
+
+    private void recordInternalEvent(FailureStrategy strategy, Context ctx) {
+        InternalEventType eventType = mapStrategyToEventType(strategy);
+        if (eventType != null) {
+            internalMetricsService.recordEvent(eventType, ctx.operation, ctx.service);
+        }
+    }
+
+    private InternalEventType mapStrategyToEventType(FailureStrategy strategy) {
+        if (strategy instanceof ProcessingDelaySimulator) {
+            return InternalEventType.PROCESSING_DELAY;
+        }
+        if (strategy instanceof StateInconsistencySimulator) {
+            return InternalEventType.STATE_INCONSISTENCY;
+        }
+        if (strategy instanceof ConcurrencySimulator) {
+            return InternalEventType.CONCURRENCY_EVENT;
+        }
+        return null;
+    }
+
+    private void logSimulationEvent(FailureStrategy strategy, Context ctx) {
+        if (strategy instanceof StateInconsistencySimulator) {
+            String message = describeStateInconsistency(ctx);
+            if (message != null) {
+                errorLogService.logStructured(ErrorCategory.STATE_INCONSISTENCY, message, ctx.service,
+                        ctx.operation, null);
+            }
+        } else if (strategy instanceof ProcessingDelaySimulator) {
+            errorLogService.logStructured(ErrorCategory.INTERNAL_FAILURE,
+                    "Processing delay simulated for " + ctx.operation, ctx.service, ctx.operation, null);
+        }
+    }
+
+    private String describeStateInconsistency(Context ctx) {
+        if (ctx.data == null || ctx.data.isEmpty()) {
+            return null;
+        }
+        if (ctx.data.containsKey("duplicateOrders")) {
+            return "Duplicate orders simulated";
+        }
+        if (ctx.data.containsKey("missingOrders")) {
+            return "Missing orders simulated";
+        }
+        if (ctx.data.containsKey("wrongOrderStatus")) {
+            return "Wrong order status simulated";
+        }
+        if (ctx.data.containsKey("emptyOrder")) {
+            return "Empty order simulated";
+        }
+        if (ctx.data.containsKey("duplicateProducts")) {
+            return "Duplicate products simulated";
+        }
+        if (ctx.data.containsKey("missingProducts")) {
+            return "Missing products simulated";
+        }
+        if (ctx.data.containsKey("staleProductData")) {
+            return "Stale product data simulated";
+        }
+        if (ctx.data.containsKey("duplicateCartItems")) {
+            return "Duplicate cart items simulated";
+        }
+        if (ctx.data.containsKey("missingCartItems")) {
+            return "Missing cart items simulated";
+        }
+        if (ctx.data.containsKey("paymentSuccessButNotSaved")) {
+            return "Payment success not saved simulated";
+        }
+        if (ctx.data.containsKey("doublePayment")) {
+            return "Double payment simulated";
+        }
+        if (ctx.data.containsKey("statusMismatch")) {
+            return "Payment status mismatch simulated";
+        }
+        if (ctx.data.containsKey("duplicatePayments")) {
+            return "Duplicate payments simulated";
+        }
+        if (ctx.data.containsKey("missingPayments")) {
+            return "Missing payments simulated";
+        }
+        return "State inconsistency simulated for " + ctx.operation;
     }
 }

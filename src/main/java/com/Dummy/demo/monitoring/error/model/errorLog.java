@@ -4,8 +4,9 @@ public class errorLog {
     public long timestamp;
     public String service;
     public String operation;
-    public String errorType;   // SYSTEM_DOWN / DB_FAILED / etc
+    public String errorType;
     public String message;
+    public String dependency;
     public long getTimestamp() {
         return timestamp;
     }
@@ -35,5 +36,13 @@ public class errorLog {
     }
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getDependency() {
+        return dependency;
+    }
+
+    public void setDependency(String dependency) {
+        this.dependency = dependency;
     }
 }

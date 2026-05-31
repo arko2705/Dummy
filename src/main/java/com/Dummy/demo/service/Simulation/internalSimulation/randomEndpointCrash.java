@@ -17,7 +17,7 @@ public class randomEndpointCrash implements FailureStrategy {
         int type = random.nextInt(2);
 
         if (type == 0) {
-            throw new RuntimeException("OPERATION_FAILED: " + ctx.operation);
+            throw new RuntimeException("OPERATION_FAILED: " + ctx.operation + " simulated crash");
         }
     }
 }

@@ -22,23 +22,18 @@ public class globalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handle(RuntimeException e, HttpServletRequest request) {
+        try {
+            String service = (String) request.getAttribute("service");
+            String operation = (String) request.getAttribute("operation");
 
-        errorLog log = new errorLog();
+            if ("SYSTEM_DOWN".equals(e.getMessage())) {
+                metricsService.markSystemDown();
+            }
 
-        log.timestamp = System.currentTimeMillis();
-        log.service = (String) request.getAttribute("service");
-        log.operation = (String) request.getAttribute("operation");
-        log.message = e.getMessage();
-
-        if ("SYSTEM_DOWN".equals(e.getMessage())) {
-            log.errorType = "SYSTEM_DOWN";
-            metricsService.markSystemDown();
-        } else {
-            log.errorType = "OPERATION_FAILED";
+            errorLog log = errorService.logFromException(e, service, operation);
+            return ResponseEntity.status(500).body(log);
+        } finally {
+            errorService.clearRequestLoggingFlag();
         }
-
-        errorService.log(log);
-
-        return ResponseEntity.status(500).body(log);
     }
 }

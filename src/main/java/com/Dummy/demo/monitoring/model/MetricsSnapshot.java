@@ -3,6 +3,9 @@ package com.Dummy.demo.monitoring.model;
 import java.util.Map;
 
 import com.Dummy.demo.monitoring.dependency.model.DependencyMetric;
+import com.Dummy.demo.monitoring.internal.model.InternalMetrics;
+import com.Dummy.demo.monitoring.reliability.model.ReliabilityMetrics;
+import com.Dummy.demo.monitoring.trend.model.TrendMetrics;
 
 public class MetricsSnapshot {
     private double avgLatency;
@@ -12,18 +15,44 @@ public class MetricsSnapshot {
     private double throughput;
     private Map<String, EndpointMetric> endpointMetrics;
     private Map<String, DependencyMetric> dependencyMetrics;
+    private InternalMetrics internalMetrics;
+    private TrendMetrics trendMetrics;
+    private ReliabilityMetrics reliabilityMetrics;
 
     public MetricsSnapshot(double avgLatency, double errorRate, long p95Latency, int requestCount, double throughput) {
-        this(avgLatency, errorRate, p95Latency, requestCount, throughput, Map.of(), Map.of());
+        this(avgLatency, errorRate, p95Latency, requestCount, throughput, Map.of(), Map.of(), new InternalMetrics(),
+                new TrendMetrics(), new ReliabilityMetrics(0.0, 0.0, 0.0, 1.0));
     }
 
     public MetricsSnapshot(double avgLatency, double errorRate, long p95Latency, int requestCount, double throughput,
             Map<String, EndpointMetric> endpointMetrics) {
-        this(avgLatency, errorRate, p95Latency, requestCount, throughput, endpointMetrics, Map.of());
+        this(avgLatency, errorRate, p95Latency, requestCount, throughput, endpointMetrics, Map.of(),
+                new InternalMetrics(), new TrendMetrics(), new ReliabilityMetrics(0.0, 0.0, 0.0, 1.0));
     }
 
     public MetricsSnapshot(double avgLatency, double errorRate, long p95Latency, int requestCount, double throughput,
             Map<String, EndpointMetric> endpointMetrics, Map<String, DependencyMetric> dependencyMetrics) {
+        this(avgLatency, errorRate, p95Latency, requestCount, throughput, endpointMetrics, dependencyMetrics,
+                new InternalMetrics(), new TrendMetrics(), new ReliabilityMetrics(0.0, 0.0, 0.0, 1.0));
+    }
+
+    public MetricsSnapshot(double avgLatency, double errorRate, long p95Latency, int requestCount, double throughput,
+            Map<String, EndpointMetric> endpointMetrics, Map<String, DependencyMetric> dependencyMetrics,
+            InternalMetrics internalMetrics) {
+        this(avgLatency, errorRate, p95Latency, requestCount, throughput, endpointMetrics, dependencyMetrics,
+                internalMetrics, new TrendMetrics(), new ReliabilityMetrics(0.0, 0.0, 0.0, 1.0));
+    }
+
+    public MetricsSnapshot(double avgLatency, double errorRate, long p95Latency, int requestCount, double throughput,
+            Map<String, EndpointMetric> endpointMetrics, Map<String, DependencyMetric> dependencyMetrics,
+            InternalMetrics internalMetrics, TrendMetrics trendMetrics) {
+        this(avgLatency, errorRate, p95Latency, requestCount, throughput, endpointMetrics, dependencyMetrics,
+                internalMetrics, trendMetrics, new ReliabilityMetrics(0.0, 0.0, 0.0, 1.0));
+    }
+
+    public MetricsSnapshot(double avgLatency, double errorRate, long p95Latency, int requestCount, double throughput,
+            Map<String, EndpointMetric> endpointMetrics, Map<String, DependencyMetric> dependencyMetrics,
+            InternalMetrics internalMetrics, TrendMetrics trendMetrics, ReliabilityMetrics reliabilityMetrics) {
         this.avgLatency = avgLatency;
         this.errorRate = errorRate;
         this.p95Latency = p95Latency;
@@ -31,6 +60,9 @@ public class MetricsSnapshot {
         this.throughput = throughput;
         this.endpointMetrics = endpointMetrics;
         this.dependencyMetrics = dependencyMetrics;
+        this.internalMetrics = internalMetrics;
+        this.trendMetrics = trendMetrics;
+        this.reliabilityMetrics = reliabilityMetrics;
     }
 
     @Override
@@ -43,6 +75,9 @@ public class MetricsSnapshot {
                 ", throughput=" + throughput +
                 ", endpointMetrics=" + endpointMetrics +
                 ", dependencyMetrics=" + dependencyMetrics +
+                ", internalMetrics=" + internalMetrics +
+                ", trendMetrics=" + trendMetrics +
+                ", reliabilityMetrics=" + reliabilityMetrics +
                 '}';
     }
 
@@ -100,5 +135,29 @@ public class MetricsSnapshot {
 
     public void setDependencyMetrics(Map<String, DependencyMetric> dependencyMetrics) {
         this.dependencyMetrics = dependencyMetrics;
+    }
+
+    public InternalMetrics getInternalMetrics() {
+        return internalMetrics;
+    }
+
+    public void setInternalMetrics(InternalMetrics internalMetrics) {
+        this.internalMetrics = internalMetrics;
+    }
+
+    public TrendMetrics getTrendMetrics() {
+        return trendMetrics;
+    }
+
+    public void setTrendMetrics(TrendMetrics trendMetrics) {
+        this.trendMetrics = trendMetrics;
+    }
+
+    public ReliabilityMetrics getReliabilityMetrics() {
+        return reliabilityMetrics;
+    }
+
+    public void setReliabilityMetrics(ReliabilityMetrics reliabilityMetrics) {
+        this.reliabilityMetrics = reliabilityMetrics;
     }
 }

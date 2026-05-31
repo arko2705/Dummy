@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor; //Interface like WebMvcConfigurer
 
 import com.Dummy.demo.monitoring.SystemLoad.SystemLoadTracker;
+import com.Dummy.demo.monitoring.error.service.errorLogService;
 import com.Dummy.demo.monitoring.service.RequestMetricsService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,8 @@ public class MetricsInterceptor implements HandlerInterceptor {
     private SystemLoadTracker loadSimulator;
     @Autowired
     SystemCrashEngine crashEngine;
+    @Autowired
+    private errorLogService errorLogService;
 
     @Override
     public boolean preHandle(HttpServletRequest request,
@@ -69,6 +72,7 @@ public class MetricsInterceptor implements HandlerInterceptor {
             metricsService.recordRequest(startTime, endTime, endpoint, latency, statusCode, isError);
 
         }
+        errorLogService.clearRequestLoggingFlag();
     }
 }
 // what if i DONT annotate metricsInterceptor with @component

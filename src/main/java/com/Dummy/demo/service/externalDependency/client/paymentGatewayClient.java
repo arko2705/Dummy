@@ -11,6 +11,7 @@ import com.Dummy.demo.service.externalDependency.resilience.retryHandler;
 import com.Dummy.demo.service.externalDependency.resilience.circuitBreaker;
 import com.Dummy.demo.service.externalDependency.load.DependencyLoadTracker;
 import com.Dummy.demo.monitoring.dependency.service.DependencyMetricsService;
+import com.Dummy.demo.monitoring.error.service.errorLogService;
 
 @Component
 public class paymentGatewayClient {
@@ -36,6 +37,8 @@ public class paymentGatewayClient {
     private DependencyLoadTracker loadTracker;
     @Autowired
     private DependencyMetricsService dependencyMetricsService;
+    @Autowired
+    private errorLogService errorLogService;
 
     private static final int TIMEOUT_THRESHOLD_MS = simulationConfig.PAYMENT_TIMEOUT;
 
@@ -92,6 +95,9 @@ public class paymentGatewayClient {
                     dependencyMetricsService.recordDependencyCall(depMetricName, end - start, success);
                 }
             });
+        } catch (Exception e) {
+            errorLogService.logDependencyFailure("PAYMENT", e, errorLogService.extractOperation(request));
+            throw e;
         } finally {
             loadTracker.decPayment();
         }

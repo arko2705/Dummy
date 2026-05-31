@@ -10,6 +10,7 @@ import com.Dummy.demo.service.Simulation.depSimulation.DepLatencySimulator;
 import com.Dummy.demo.service.externalDependency.simulationConfig;
 import com.Dummy.demo.service.externalDependency.load.DependencyLoadTracker;
 import com.Dummy.demo.monitoring.dependency.service.DependencyMetricsService;
+import com.Dummy.demo.monitoring.error.service.errorLogService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,8 @@ public class fakeDBClient {
     private DependencyLoadTracker loadTracker;
     @Autowired
     private DependencyMetricsService dependencyMetricsService;
+    @Autowired
+    private errorLogService errorLogService;
     private final int TIMEOUT_THRESHOLD_MS = simulationConfig.DB_TIMEOUT;
     private Random random = new Random();
 
@@ -99,6 +102,9 @@ public class fakeDBClient {
                     dependencyMetricsService.recordDependencyCall(depMetricName, end - start, success);
                 }
             });
+        } catch (Exception e) {
+            errorLogService.logDependencyFailure("DB", e, errorLogService.extractOperation(request));
+            throw e;
         } finally {
             loadTracker.decDB();
         }
