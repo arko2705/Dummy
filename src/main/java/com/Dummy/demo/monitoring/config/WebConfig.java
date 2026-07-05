@@ -15,6 +15,17 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(metricsInterceptor);
+        registry.addInterceptor(metricsInterceptor)
+                // Observability endpoints must stay up during simulated outages so ML/monitoring
+                // can still read system state (otherwise GET /api/metrics returns 500 SYSTEM_DOWN).
+                .excludePathPatterns(
+                        "/api/metrics",
+                        "/api/metrics/**",
+                        "/api/errors",
+                        "/api/test",
+                        "/api/hostMetrics",
+                        "/api/networkMetrics",
+                        "/api/appMetrics",
+                        "/api/externalDependencyMetrics");
     }
 }

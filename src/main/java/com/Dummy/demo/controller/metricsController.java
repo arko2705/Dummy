@@ -42,7 +42,12 @@ public class metricsController {
 
     @GetMapping("/metrics")
     public MetricsSnapshot getMetrics() {
-        return aggregator.getLatestSnapshot();
+        MetricsSnapshot snapshot = aggregator.getLatestSnapshot();
+        if (snapshot == null) {
+            // First scheduled aggregation has not run yet (fixedRate = 5s after startup)
+            return new MetricsSnapshot(0, 0, 0, 0, 0);
+        }
+        return snapshot;
     }
 
     @GetMapping("/metrics/details")

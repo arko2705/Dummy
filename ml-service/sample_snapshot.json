@@ -1,0 +1,32 @@
+{
+  "avgLatency": 120.5,
+  "errorRate": 0.08,
+  "p95Latency": 480,
+  "requestCount": 42,
+  "throughput": 8.4,
+  "endpointMetrics": {
+    "/api/products": { "avgLatency": 95.0, "errorRate": 0.02, "requestCount": 20 },
+    "/api/orders": { "avgLatency": 210.0, "errorRate": 0.15, "requestCount": 12 }
+  },
+  "dependencyMetrics": {
+    "DB": { "avgLatency": 350.0, "failureRate": 0.06, "requestCount": 18 },
+    "PAYMENT": { "avgLatency": 80.0, "failureRate": 0.01, "requestCount": 5 }
+  },
+  "internalMetrics": {
+    "processingDelayEvents": 2,
+    "stateInconsistencyEvents": 0,
+    "systemCrashEvents": 0,
+    "concurrencyEvents": 1
+  },
+  "trendMetrics": {
+    "latencySlope": 2.5,
+    "errorSlope": 0.012,
+    "throughputSlope": -0.3
+  },
+  "reliabilityMetrics": {
+    "failureRate": 0.07,
+    "mtbf": 45000.0,
+    "mttr": 3000.0,
+    "availability": 0.92
+  }
+}

@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### ML Service ###
+ml-service/.venv/
+ml-service/data/
