@@ -1,6 +1,6 @@
-# 🚀 Dummy App – System Monitoring & ML Integration
+# Dummy App – System Monitoring & ML Integration
 
-## 🧠 Problem Statement
+## Problem Statement
 
 Modern distributed systems often lack:
 - Real-time observability
@@ -15,7 +15,7 @@ This project simulates a backend system that:
 
 ---
 
-## 🎯 Objective
+## Objective
 
 To build a **mini intelligent observability system** that can:
 - Monitor system behavior in real time
@@ -25,7 +25,7 @@ To build a **mini intelligent observability system** that can:
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 The project is divided into three main layers:
 
@@ -50,7 +50,7 @@ Collects system and request-level metrics.
 - Error rate
 - Active requests
 
-### 3. Error Simulation Layer 🚧 (In Progress)
+### 3. Error Simulation Layer 
 Simulates abnormal system behavior:
 - Random failures
 - Latency spikes
@@ -74,7 +74,7 @@ Simulates abnormal system behavior:
 
 ---
 
-## ✅ Current Implementation
+## Current Implementation
 
 ### Backend (Spring Boot)
 - REST APIs implemented
@@ -89,14 +89,14 @@ Simulates abnormal system behavior:
 
 ---
 
-## 🚧 Work in Progress
+## Work in Progress
 
 - Error simulation layer
 - Machine Learning integration
 
 ---
 
-## 📊 Data Available for ML
+## Data Available for ML
 
 The system provides structured data for ML models:
 
